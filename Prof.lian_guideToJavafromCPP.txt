@@ -1,0 +1,631 @@
+/*              A BRIEF C++ TO JAVA TUTORIAL (2023 Edition)
+
+  	                      Chuck Liang
+
+                  Hofstra University Computer Science 
+
+
+  This short, informal tutorial is designed to allow students who are
+already familiar with C++ to begin writing programs in Java as quickly
+as possible.  It is not intended to be a comprehensive guide to the
+Java language.  Those who wish to write substantial Java applications
+should consult full-scale references.  Most advanced features are left
+out.
+
+  This document contains real Java source code.  To compile this file
+on Hofstra University's Linux workstations, save this file as
+"quickcj22.java" - the file name is important (see below).  Type "javac
+quickcj22.java" to compile the program.  Type "java quickcj22" to run it.
+The program that will be executed will be the last example of this
+tutorial, which is uncommented.  JDK, or "java developer's kit", is a
+free java environment available from Oracle.  Procedures for compilation
+and execution in jdk are similar on all platforms.
+
+This document is available at cs.hofstra.edu/~cscccl/csc17/quickcj23.java
+
+----
+                               BACKGROUND
+
+  There are many different programming languages.  To understand what
+is java and how it compares to other languages, in particular to C++,
+it helps to know a little history.  The Java programming language was
+invented in the early to mid 1990's just as two trends were converging:
+
+    1. In the hardware industry, the wide availability of 32-bit processors
+       drastically increased memory capacity and processing speeds, which 
+       meant that programming language features that were once considered 
+       too expensive were now within reach: one of these features is 
+       *virtual machine*, another is *garbage collection*.
+
+    2. In the software industry, an improved understanding of the usage
+       of *object oriented programming* and what kind of programming language
+       features are best suited for this style of programming.
+
+Did it completely replace C and C++?  Certainly not.  OOP is not the
+right approach for every kind of software.  A core principle of C++ is
+"Zero Overhead Abstraction", which basically means the availability of
+advanced programming language features without additional runtime
+cost.  While this sounds attractive, it also means that writing
+correct programs in these languages is generally harder, and mistakes
+can have disatrous consequences.  *Memory errors* are one type of
+these consequences.  Java's solution to such problems abandons zero
+overhead abstraction and as a consequence, java programs are more
+expensive to run in terms of time and memory.  C and C++ are still
+used for systems programming, or programming that's "closer to the
+hardware", whereas java and similar languages are more appropriate for
+writing most applications software.
+
+Syntactically, C++ and java have many similarities, which lead to some
+people to call Java "C++ cleaned up" while others refer to it as "C++
+for dummies."  Neither characterization is correct.  When reading this
+tutorial, it is important to remember that, despite some similarities,
+Java and C++ belong to entirely different categories of programming
+languages.  They were designed for different purposes.
+
+                           FIRST EXAMPLE
+
+Let's get started by looking at a simple java program.  The lines are
+numbered in comments (comments are inserted in the same way as in C++).
+
+// start of program
+public class firstprog                        // 1
+{                                             // 2
+
+private int factorial(int n)                  // 3
+  {  int i;                                   // 4
+     int answer = 1;
+     for(i=2;i<=n;i++)                        // 6
+       answer = answer * i;
+       return answer;                         // 8
+  }
+ 
+private static int rfact(int n)               // 10  note "static"
+  {  if (n<2) return 1;         
+      else return n*rfact(n-1);               // 12
+  }
+
+public static void main(String[] args)        // 14
+ { firstprog prog = new firstprog(); 
+   int m = 5;                                 // 16
+   System.out.println("The factorial of " + m + " is " + prog.factorial(m));
+   System.out.println("With the recursive version it's also " + rfact(m));
+ }                                            // 19
+
+}  // end of class firstprog  (note: no ";" at the end of classes)
+// end of program
+
+
+  The first thing you should notice is that everything is inside a class 
+definition.  Java is *more* object oriented than C++, which retains many 
+aspects of the non-object oriented C language.  All code must be inside 
+classes.  There can be more than one class defined in the same file, 
+but only one class in any file can be prefixed "public", as on line 1.  
+The sole public class will contain the "main" function (or "method"), which 
+must be prefixed "public static void".  The main function is the entry 
+point of the entire program, as in C++.  The argument to main is an array 
+of strings representing optional command line arguments.  ( In C/C++ they 
+would be main(int argnum, char* args[]) ).  What's more, the file that 
+contains this program *must* be called "firstprog.java" - it must 
+correspond to the name of the public class that contains main .
+
+  Note that all elements of a class (functions as well as variables)
+can be predicated with "public", "private", "protected", as opposed
+to C++, which lets you predicate entire sections (e.g, "public:").
+The meanings of the "public" and "private" are the same as in C++.
+"protected" in Java is slightly looser than in C++.  Using no
+qualifier before a definition is another possibility: it means that
+the item is public within the same "package": this basically means
+that it's public to all code that's compiled together.  With the
+exception of the "private" predicate, the definitions of factorial and
+rfact (iterative and recursive versions of the factorial function) are
+the same as they would be in C/C++.
+
+  Because even "main" is part of a class, you must define an
+*instance* of the class before you can call any of its instance
+methods (factorial).  This is the purpose of the first line of main,
+which defines "prog" to be an instance of the "firstprog" class.  The
+function "factorial" can only be called relative to a "prog" object.
+The difference between "factorial" and "rfact" is not only that one is
+recursive, but also in that rfact is declared "static", which means
+that it's a class-wide function, and does not require an instance of
+the class to be called.  This is why rfact can be called directly from
+main, which is also static.  I will discuss further how classes and
+objects are defined in the next section, but it is necessary to
+emphasize that using classes is NOT A CHOICE in java: you MUST use
+them!
+
+  Simple console output is accomplished with System.out.println.  The C++ 
+equivalent of line 17 would be
+
+  cout << "The factorial of " << m << " is " << factorial(m) << endl;
+
+The "+" symbol in Java is used for string concatenation.  It automatically
+converts numbers (m) into a printable string form (as with cout).  If
+you don't want to automatically print a carriage return at the end of
+the line, use System.out.print  (as opposed to .println).  
+
+  An alternative to System.out.println is System.out.printf, which works
+the same way as the printf function of the C programming language.
+
+  Note also that the end of the class definition do not have a ";", as
+is required in C++ class definitions.
+
+
+              
+                         OBJECTS, JAVA STYLE
+
+  So far the differences between java and C++ we've seen are mostly
+syntactic.  From now on we'll be dealing with more important differences.
+Let's take a closer look at classes and objects in Java.  A bank account
+offers the simplest example of a class:
+
+public class secondprog
+{
+    public static void main(String[] args)
+    {  account myaccount = new account(200.0,1);   // "account" defined below
+       account youraccount = new account(300.0,2); // note "new" used
+      
+       myaccount.withdraw(30.0);
+       youraccount.deposit(40.0);
+       // etc ...
+    }
+} // end of public class secondprog
+
+class account
+{
+    private double balance;  // 64 bit floating point number
+    private int accountId;   // a real account will contain more info
+    
+    public account(double b, int id )  // constructor
+    { balance = b;    // sets initial balance
+      accountId = id; 
+    }
+
+    public void deposit(double amount)
+    { balance = balance + amount; }  
+
+    public void withdraw(double amount)
+    { if (amount>0 && amount <= balance) balance = balance - amount; }
+} // end of class account
+// end of program
+
+
+Notice that the account class comes *after* the public class, where
+it is referred.  This is not possible in C++ without a prototype or
+header file.  Java, on the other hand, allows for "forward referencing",
+which just means that elements (variables, functions and classes), can
+be defined after the point in the file where they're used.  This is an
+advanced language feature that was not commonly available when C/C++ was 
+standardized.
+
+  What other differences are there compared to a C++ class?  A WHOLE LOT!!
+The most important difference is that 
+
+             ALL OBJECTS ARE REFERENCED THROUGH POINTERS
+
+(repeat this to yourself 100 times)
+
+  In the above program, the expression "myaccount.withdraw(30.0)"
+would be written in C++ as "myaccount->withdraw(30.0)".  In Java,
+there is a fixed convention for pointers.  All variables of primitive
+type, such as int, char and double, are direct variables (non-pointers).
+All complex data, including arrays, strings and all class instances,
+can only be defined using pointers.  I emphasize that this is a fixed
+convention: you cannot just put a "&" in front of an int variable to
+make it into a pointer.  The use of pointers in Java is more
+restricted.  Because of this fixed convention, you do not use
+"*" and "->" to indicate that pointers are being used.  They are
+IMPLICIT, since all variables that represent objects are pointers
+(that's why I used "new" to create the objects).  Thus the syntax is
+misleading if you read the above program as a C++ program.  "A.B" in
+Java corresponds to "A->B" in C++.  The C++ expression "A.B" has no
+equivalent in Java.
+
+  This point is so important that I will say it again:  
+
+              ****** REALLY IMPORTANT!!!  ******
+
+  In Java all variables of primitive type are non-pointers, and all
+variables of class type are pointers.  The "*", "&" and "->" symbols
+are not used in Java.  "A.B" in Java corresponds to "A->B" in C++.
+The C++ expression "A.B" has no equivalent in Java.
+
+               ******* DON'T FORGET!!! *******
+
+If we had to write the closest equivalent of this program (secondprog)
+in modern C++, it would probably be the following:
+
+#include<memory>
+using namespace std;
+
+class account {
+private:
+  double balance;
+  int accountId;
+public:
+  account(double b, int id) {
+    balance=b;  accountId=id;
+  }
+  virtual void deposit(double amount) {
+    balance = balance + amount;
+  }
+  virtual void withdraw(double amount) {
+    if ((amount>0) && (amount<=balance)) balance = balance- amount;
+  } // the extra ()s are important because booleans are just integers in C++
+};
+int main() {
+  shared_ptr<account> myaccount = make_shared<account>(200.0,1);
+  shared_ptr<account> youraccount = make_shared<account>(300.0,2);
+  myaccount->withdraw(30.0);
+  youraccount->deposit(40.0);
+  return 0;
+}
+
+Some aspects of the program does indeed look very much like java,
+including the constructor of the class.  But others are not.  You may
+not be familiar with certain keywords here, such as "virtual",
+"shared_ptr" and "make_shared".  You probably didn't learn to write
+C++ programs like this, but these elaborations are needed to bring C++
+close to Java.  So just keep in mind that though the syntax of the two
+languages have many similarities, there are also very important
+differences.  Java is not just some "version" of C++.
+
+                     -------------------
+
+  Class inheritance has the following syntax in Java:
+
+  class savings_account extends account
+  { ... }
+
+  Whereas in C++ you would have written 
+
+  class savings_account : public account
+  { ... };
+
+  You may not define a method for a class outside of the class.  That
+is, in C++ we often do void classname::methodname() {...}.  This is
+not possible in Java.  Another difference between Java and C++ is that
+methods in a class, other than static and private methods, are
+"virtual": that is, in C++ in order to have the closest equivalent to
+this Java program your methods must be marked "virtual".  There are
+some other differences between Java and C++ classes (such as the lack
+of multiple inheritance) that you should consult a full-scale
+reference for.
+
+  
+                     WHERE IS THE DESTRUCTOR?
+
+One of the key differences between C++ and Java is that java runs on a
+virtual machine, which also contains automatic memory management or
+"garbage collection."  The Java virtual machine will automatically
+reclaim the memory for objects that are nolonger pointed to by
+anything in your program.  Thus there is no need to define a destructor 
+for a class, and no need for "delete" or "free" or smart pointers to
+deallocate memory manually, as you must do in C/C++.  Java is intended
+for high-level, applications oriented programming and not so much for
+low level systems programming.  Abstractions in Java have more than
+"Zero Overhead", but are balanced by the advantages of being simpler and
+generally offer better protection against errors, accidental or otherwise.
+
+
+                              TYPES
+
+  Java is claimed to be more "type safe" than C++.  This means, for
+example, that a value of type character array will never end up as a
+value of type "int".  In C++ this is unfortunately not true and is a
+one reason why the language offers less protection against errors.
+For example, the following C++ segment is actually valid! (because a
+pointer is represented as an integer):
+
+  int A[4];        
+  int x = 0;
+  if (A>x) x++;    // not ok in java
+  if ( (int) A > x ) x++;  // still not ok in java
+
+  But the two if statements would not be valid in Java.  You cannot
+compare an array with an integer!  Even explicit type casting between
+certain types (such as arrays and integers) are forbidden.
+
+  Booleans, arrays, and strings also illustrate how Java have a "cleaner"
+treatment of types:
+
+  
+BOOLEANS:  Java defines the "boolean" type with constants "true" and
+"false".  You cannot use 0 for false and non-zero values for true, as
+you do in C++.  The following statement would be valid in C++:
+
+  while (4 && 5) { cout << "4 and 5 are both true!"; }
+
+But it doesn't make much sense and can easily lead to mistakes in programming.
+The boolean operators (&&, ||, etc ...) are the same as they are in C++
+The following segment illustrates booleans in Java (what does it do?):
+
+  boolean A = true;
+  boolean B = false;
+  while (A || B) { A = !B;  B = A && B; } 
+
+
+
+ARRAYS: The statements
+
+          int[] myarray;
+          myarray = new int[5];
+
+ or       
+          int myarray[] = new int[5];
+
+  would declare an array of 5 integers in Java.  Note the word "new".
+What does this mean?  It means that arrays are *objects* in Java.  As
+objects they have members.  For example, 'myarray.length' would
+return the length of the array (5 in the above case).  However, the
+syntax for using array objects is specialized.  A[i] would refer to
+the i+1st element of the array.  Array indices work the same way as
+they do in C++ (they start from 0).  Now, since arrays are objects,
+variables such as 'myarray' above are therefore actually pointers.
+The consequence of this is that, if you pass an array into a function,
+and make a change to some element of the array, then the change is
+effected outside the function as well (just as C++ arrays).  But
+remember that the pointer operations (* and &) are not allowed in
+Java, so you cannot do something like *(myarray+2) to access the 3rd
+element of the array.  You've got to do it with standard array
+notation (myarray[2]).  
+
+  Multiple-dimensional arrays are declared as in
+
+  int[][] twodarray = new int[5][5];
+
+  Unfortunately, this array is not contiguous in memory. The equivalent in
+  C++ would be:
+
+     int* twodarray = new int*[5];
+     for(int i=0;i<5;i++) twodarray[i] = new int[5];
+
+  That is, it is an array of pointers to other arrays, which means that the
+  array may not occupy a contiguous segment of memory.
+
+
+STRINGS: The Java statement
+
+      String greeting = "hello";
+
+corresponds to the C++ statement 
+
+      std::string greeting = "hello";
+
+There's no equivalent to strings as char* in C.  Like arrays, STRINGS
+ARE OBJECTS.  They have methods.  For example, 'greeting.length()'
+would return the length of the string (in this case 5).  The '+'
+symbol can be used to concatenate strings:
+
+ ("abc" + "def") will return the string "abcdef".  
+
+Since in Java all objects are pointers, you cannot use '==' to test
+for string equality (== would test for pointer equality).  The Java
+String class contains an "equals" method that should be used to test
+for string equality.  That is, the expression
+
+   greeting.equals("hello")
+
+would return true.  (makes sense, right?  greeting is an object with a
+method that allows it to be compared with other string objects).
+
+In C++, the `==` operator is *overloaded* so that it checks for content
+equality between std::strings, not just pointer equality.  However, 
+Java *does not allow operator overloading*.
+
+
+-----------------------  End of Basic Tutorial --------------------------
+
+
+                              INPUT/OUTPUT
+
+If we place at the top of a program:
+
+import java.util.Scanner;
+
+We can then use the "Scanner" class without always writing
+"java.util." before it.  java.util.Scanner is the most convenient tool
+for reading from input, like the cin/scanf calls from C++/C.  The
+following code creates a scanner object to read from "stdin", which
+means console by default.
+
+Scanner scin = new Scanner(System.in); // System.in is "standard in"
+// the following reads the next whitespace-separate "token" as a String
+String s = scin.next();
+String line scin.nextLine(); // reads til end of line
+
+// the following reads and parses next token into an integer
+int i = scin.nextInt(); 
+
+But if that token wasn't an integer, it would throw an "uncaught exception"
+and stop the program.  So it would be safe to do:
+int i = 0;
+
+if (scin.hasNextInt()) i = scin.nextInt();
+double x = 0;
+if (scin.hasNextDouble()) i = scin.nextDouble();
+while (scin.hasNext()) System.out.println(scin.next());
+scin.close(); // this "closes" the input stream.
+
+Scanner can read from multiple sources, not just System.in:
+
+scin = new Scanner("read from this"); // read tokens from a give string
+
+And, with appropriate imports and placed inside a try-catch block, scanner
+can also read from files and from network sockets:
+
+ try {
+         Scanner sc2 = new Scanner(new java.io.File("quickcj22.java"));
+         System.out.println(sc2.nextLine());
+         sc2.close();
+	 System.out.println("here?");
+         // read from TCP socket:
+	 Socket www = new Socket(InetAddress.getByName("cs.hofstra.edu"),80);
+	 sc2 = new Scanner(www.getInputStream());
+	 while (sc2.hasNext())
+	     System.out.println(sc2.next()+ " ");
+	 sc2.close();
+       } 
+ catch (Exception e) {System.out.println(e); System.exit(1);}
+
+Java exceptions are of two kinds: those that are subclasses of RuntimeException,
+for which try-catch blocks are optional, and other subclasses of Exception,
+which must be placed within some try-catch block.  We will address exception
+handling in more detail later, although the trend in modern programming
+languages is moving away from exceptions for error handling.
+
+For a complete set of functions that can be called on Scanner, consult the
+java API documentation.
+
+
+                      Lose Ends and Conclusion
+
+   There are a couple of more things that needs to be mentioned before
+we wrap up:
+
+A.  The NULL pointer in Java is not equivalent to 0.  The keyword "null"
+represents the null pointer.
+
+B.  When you declare a variable as in "int x;" as a memeber of a
+class, that variable is automatically initialized to zero when an
+instance of the class is created.  However, when you declare such a
+variable within a method, it must be explicitly initialized (C++ would
+still compile code even if you do not give variables initial values).
+Similarly, when you declare an object variable as in "account x;" the
+variable is automatically initialized to null if it is declared as a
+class member.  But it must be explicitly given a value if it declared
+inside a method.
+
+
+  I stress again that this is only meant as a quick introduction.  Do
+not assume that these examples represent the only way to accomplish
+something in Java.  The SOLE purpose of this tutorial is to allow the
+initial transition from C++ to Java to be as painless as possible.
+Most advanced features are left out. Java comes fully equipped with a
+set of features for IO, graphics, concurrency, security, etc...  I did
+not even touch on graphical programming, which is a strength of Java
+because of its platform independence.  C++ programs fail to be
+cross-platform compatible once more advanced IO features (graphics)
+are involved.  Unfortunately, any discussion of these useful
+mechanisms would be out of the scope of this tutorial, which is
+designed to simply allow you to start programming in Java as quickly
+as possible.
+
+  I conclude this tutorial with a sample Java program that inputs
+integers into an array and inserts every element of the array into a
+"stack" data structure implemented using a linked list.  This is not
+necessarily the best way to implement a stack but it is the quickest.
+
+Study it carefully, then compile and execute it.
+*/
+
+// Start of actual java code
+import java.io.*;   // needed for all i/o except System.out.println
+import javax.swing.*;  // needed for graphical io
+import java.util.Scanner;  // needed for Scanner
+
+class stack     // class for stacks containg integers as values
+{
+   int head;    // it's not "public" but visible to other classes in same file.
+   stack tail;  // no *, but it's a pointer by convention!
+
+   public stack(int h, stack t)    // constructor
+    { head = h;  tail = t; }   
+   
+    // no ~stack() ?  Java has garbage collector
+   public void print()           // prints contents of list
+    {  stack ptr = this;       // 'this' is same as in C++
+       while (ptr != null)    // 'null' is a keyword, must be lowercase     
+	   { 
+	       System.out.print(ptr.head + " ");  // + is string cat.
+	       ptr = ptr.tail;   // '.' in java is '->' in C++
+           }
+       System.out.println("");   // same as System.out.print("\n");
+    }//print
+}   // no extra ';' at end of classes
+
+
+
+public class quickcj22     // sole public class; this file must be called
+{                          // quickcj22.java  
+  public static void main(String[] args) // required header for main
+    { int i;         // loop counter,
+      String input;  // string representation of input
+      int A[] = new int[5];  // array of 5 elements
+      stack Stk = null; // a linked list, initially null
+      Scanner scin = new Scanner(System.in);
+      for(i=0;i<A.length;i++)                // note A.length
+	  {  
+	      System.out.print("Enter an integer: ");
+	      A[i] = scin.nextInt();
+	  }
+      for(i=A.length-1;i>=0;i--)   // convert Array to stack backwards
+          Stk = new stack(A[i],Stk);   // "pushes" number in front of stack
+      System.out.println("Contents of stack:");
+      Stk.print();  // prints contents of stack from top to bottom.
+      // to "pop" the stack:
+      while (Stk!=null) Stk = Stk.tail;
+      scin.close();  // closes input stream
+    }  // end of main
+} // end of public quickcj22 class
+
+
+/*
+   This document may be freely distributed as long as it's unmodified and
+   used only for academic purposes.
+*/
+
+
+/*     EXTRA EXTRA 
+
+                   SPECIAL NOTES ON JAVA IO:
+
+Here's another way to do IO.  First put the following line at the top of 
+your file:
+
+import javax.swing.*;
+
+The following expression returns a String, which is the user input:
+
+     String s;
+     s = JOptionPane.showInputDialog(null,"enter something: ");
+
+The following statement displays a string in a dialog box:
+
+     JOptionPane.showMessageDialog(null,"hello");
+
+To convert the input string to a numerical value, use:
+
+     int x = Integer.parseInt(s);  // where s is a string such as "12"
+     double y = Double.parseDouble(s);
+
+For example, to input a circle's diameter and return the circumference:
+
+     String s = JOptionPane.showInputDialog(null,"enter diameter: ');
+     double x = Double.parseDouble(s);
+     JOptionPane.showMessageDialog(null,"the circumference is " + 3.14*x);
+
+You can also convert anything in Java to a string representation by 
+concactenating the empty string in front of it, e.g. ""+3.14 gives "3.14".
+
+
+               --------------------------------------
+
+Another way to implement simple, interactive IO in a program is to use the
+"plaingui" class that I've provided.  The implementation of this class 
+requires thread synchronization techniques, so I will not discuss the details.
+To use it, make sure that it's in the same directory as your other java
+programs (or visible on the CLASSPATH).  The following code is mostly
+self-explanatory:
+
+	plaingui p = new plaingui(40,200,300,400); 
+	// makes new gui at position 40,200, width 300, height 400
+	p.println("Hello, it's me!\n");
+	String s = p.getinput("say something:");
+	p.println("what does "+s+ " mean?");
+
+p.println outputs a new line into the gui's scrollable display window.
+p.getinput prints a prompt (in the case "say something") and waits for
+user input.  When input is received, p.getinput returns the input as a
+string.
+*/

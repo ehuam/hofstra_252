@@ -1,0 +1,418 @@
+#include<iostream>
+#include<string>
+#include<memory>
+using namespace std;
+
+/* REVIEW OF ESSENTIAL PROGRAMMING CONCEPTS, for CSC17 and CSC123
+
+The materials presented here are mandatory and will be quizzed on.
+
+This document covers certain basic programming concepts, using C++
+as a platform because it's a language that you should already be
+familiar with (though few of you know it thoroughly, so there will
+something new for you to learn here).  The purpose, here, however, is
+not to teach C++ but to clarify certain properties of programming
+languages in general.  These general properties are important to the
+understanding of other languages including Java.  This document will
+focus on the following topics, in order of importance:
+
+1. Memory allocation: Runtime Stack and Heap  ***
+2. Pointers and heap allocated memory
+3. Difference between a "pointer" and a "reference"
+4. Memory management
+5. Difference between a macro and a function
+
+Let's start by looking at three versions of a function, each of which
+tries to swap a pair of integers.  There's also a fourth version, but
+which is not a function but a "macro".  First, take a brief look at
+main at the end of this program to see what's being called.
+*/
+
+void swap1(int x, int y)
+{
+  int tmp = x;
+  x = y;
+  y = tmp;
+  // x and y are swapped here, but what about outside the function?
+}
+// called from main with:
+// int a=2, b=4;
+// swap1(a,b);
+
+/*
+If you run main, you will notice that the two variables a and b in
+main are NOT swapped by swap1(a,b).  x,y are local variables in swap1.
+This is one of the first examples of why programming is MORE THAN JUST
+SYNTAX that you should have encountered while learning how to program.
+You need to understand what's happening beneath what's visible.  That,
+unfortunately, is not easy for many students to do, even at your
+level.  The most common WRONG answer that I hear students give to
+explain what's happening here is that "the function didn't return a
+value."  That's a reflection of the fact that the student is looking
+for some piece of *syntax* to latch onto: they're looking for the
+"return" keyword'. But the correct explanation can't be found in the
+syntax itself.  Instructors would sometimes resort to all sorts of
+metaphors and 'rules of thumb' to explain how to understand the
+locality of variables.  None of them are as good as the truth.  Time
+to face the truth:
+
+          MEMORY ALLOCATION: THE RUNTIME STACK
+
+Variables hold data and data is stored in memory.  An integer usually
+requires 4 or 8 bytes.  How does a program determine where in memory
+to store the values of variables?  Normally, it uses what's called the
+*RUNTIME STACK*.  A program is series of function calls: first, "main"
+is called, which calls other functions (some built-in like cout, some
+user-defined), which in turn calls other functions.  Each function
+contains locally declared variables: in the case of swap1 for example,
+these consists of x, y and tmp.  All formal arguments (x,y) plus any
+other variables (tmp) declared in the body of the function are LOCAL
+TO THE FUNCTION CALL.  After each call concludes and returns to the
+calling procedure, these variables are destroyed.  This is enabled using
+a *stack*:
+
+1. At the start of each function call (e.g. swap1(a,b) from main), a
+new STACK FRAME is created. The frame contains enough memory to hold
+all the local variables needed by the function.  The formal argument
+variables (x and y) are assigned to the values of the actual arguments
+(since a==2 and b==4, x and y are assigned to 2 and 4).  The frame is
+then PUSHED onto the stack.  During the execution of the body of the
+function, x, y and tmp refers to the memory locations in the top stack
+frame.  Thus two copies of the values of 2,4 are created, occupying 
+different memory locations, illustrated below:
+
+Thus when main calls swap1 we have:
+
+--------------------
+frame for swap1 call
+x = 2
+y = 4
+tmp = 2
+--------------------
+frame for main call:
+a = 2
+b = 4
+--------------------
+
+2. When the function finishes executing and returns to the calling 
+function, the stack frame for the function is POPPED from the stack:
+the memory for the function call is reclaimed (deallocated).
+
+Clearly, the x and y swapped by the body of swap1 represent different 
+memory locations than the a and b in main, and it doesn't matter
+if we also named a,b as x,y in main: they will still occupy different
+memory locations.  If we printed out the value of x,y right before the
+end of swap1, we will see that x and y are indeed swapped.  But when
+the frame is popped and the program returns to main (with or without a
+return value), the values of a and b remain unchanged. This is how
+the locality of variables are typically implemented.
+
+Note that a new stack frame is not just created for each function but
+for EACH FUNCTION CALL.  If main calls swap1 again then another frame
+will be pushed onto the stack reflecting the parameters of that call.
+This also explains a danger posed by the careless use of recursion:
+each time a function calls itself a new stack frame is created.  Unless
+you can limit the depth of these nested calls, this will result in
+a stack overflow.
+
+This form of parameter passing is called "CALL BY VALUE" and is the
+most common form of parameter passing found in
+languages. Call-by-value means that we fully evaluate the (actual)
+arguments before passing them to a function, so swap1(a,b) doesn't
+technically pass a,b to swap1, but their values which are 2,4.  **Call
+by value is the only form of parameter-passing used by Java and
+several other languages.
+
+Let's look at another example of call-by-value:
+*/
+
+void swap2(int *x, int *y)
+{
+  int tmp = *x;
+  *x = *y;
+  *y = tmp;
+}
+
+/*
+Yes, this is also an example of CALL-BY-VALUE, although in this case
+the values are POINTERS.  Pointers in C++ are actually just integers
+that represent memory addresses.  Unfortunately, the symbols * and &
+are used rather confusingly in C++: placing * after a type (as in int*)
+makes the type into a pointer type (int* means pointer to integer),
+but placing * before a variable DEREFERENCES it: *x refers to the
+contents of the memory location pointed to by x.  In main, this function
+is called using swap2(&a,&b): placing & before a variable returns the
+memory address of that variable.  Calling swap2(&a,&b) DOES swap the
+values of a and b, because the values of x and y in swap2 are the 
+memory addresses of a and b in main but what's actually swapped are
+the contents of those addresses, which are accessed by dereferencing x,y.
+
+However, it is important to realize that x and y are still local to swap2:
+consider the following variation of swap2:
+*/
+void swap2b(int* x, int* y)
+{
+  int* tmp = x;
+  x = y;
+  y = tmp;
+}
+/*
+  This function swaps the local POINTERS x and y, but the contents
+that these pointers point to were never touched.  Had you called
+swap2b(&a,&b) from main, you will see that the values of a and b will
+NOT be swapped.  Swapping x and y here is not the same as swapping &a
+and &b in main.  x and y are still local and reassigning them will not
+affect anything externally.  This is not the same as changing the
+CONTENTS of what they point to with *x=... If you're getting confused,
+then you're getting a taste of the level of understanding that I
+expect of you: think harder.  Passing a pointer to a function is still
+call-by-value: the pointers are local, but they can point to data
+that's not local.
+
+               MEMORY ALLOCATION: THE HEAP
+
+Not all data is allocated on the stack. Some are allocated on the heap.
+Unlike the stack, the heap is more "global".  However, in order to
+reference heap-allocated data, you will need a pointer to it on the stack.
+Lucky for you there is a keyword that identifies when this is happening
+syntactically: "new".  When you say:
+
+int *A = new int[10];
+
+for example, you are allocating an array of 10 integers on the heap: the
+call to new int[10] returns the memory address of the start of this array.
+When you refer to the actual integers in the array, A[2], for example,
+you are also automatically deferencing the pointer A.  Usually,
+only the pointer remains on the stack (unless the pointer itself is part
+of a heap-allocated structure).  In other words, heap allocation usually
+creates the following scenario:
+
+     Stack     |      Heap
+               |
+  int *A   -------->  int[10]  (10 ints on heap)
+               |
+
+Here's a KEY DIFFERENCE BETWEEN C++ and Java: in C++ you can choose
+to allocate any kind of data on the heap or the stack (up to a certain
+size).  A pointer in C++ can point to locations on the heap or on the
+stack.  But more commonly nowadays, languages restrict when the heap
+instead of the stack is used.  In Java, which is typical, you can only
+allocate simple, fixed sized data on the stack, like ints, doubles and
+booleans (and pointers).  All other, variable-size data, including
+strings, arrays and all objects, must be allocated on the heap.
+Simple data like single ints cannot be allocated on the heap unless
+they're part of a larger structure.  A pointer in Java can only point to
+objects on the heap, so there's no equivalent to swap2 in Java,
+because you can't have a pointer to a single integer.  There is also
+no equivalent in Java to 
+
+int A[10]; 
+
+because this will allocate the entire array of 10 integers directly
+on the stack, which is not allowed.
+
+
+            MEMORY LEAKS AND GARBAGE COLLECTION
+*/
+
+void swap2c(int *x, int *y)
+{
+  int* tmp = new int;
+  //unique_ptr<int> tmp(new int); // requires #include<memory>, C++11
+  *tmp = *x;
+  *x = *y;
+  *y = *tmp;
+  // delete(tmp);
+}
+
+/*
+This function uses a heap-allocated integer as the temporary during the
+swap.  The means that when the stack frame for swap2c is popped, only
+the pointer tmp is deleted, NOT the actual integer on the heap.  This
+function results in a memory leak, which will accumulate if it keeps
+happening (it will happen if your program is on a server).  There are
+several ways to deal with memory leaks:
+
+1. Don't use the heap.  But this approach is often not realistic, like 
+when you need to dynamically add to a data structure.
+
+2.  Manually deallocate the heap-allocated memory: at the end of swap2c,
+add the line "delete(tmp)".  But you have to be careful where you insert
+these lines: it's not always obvious. Sometimes you want the memory to
+persist.  You must also be sure that the same memory is not deallocated
+twice.
+
+3.  Use a "smart pointer".  Modern versions of C++ (since 2011) has a
+construct called a "unique pointer": replace the first line in swap2c
+with std::unique_ptr<int> tmp(new int); All other lines can stay the
+same.  Unlike a regular pointer, when a unique_ptr is popped off the
+stack the memory that it points to is also deallocated.  As the name
+suggests, you can have only one unique_ptr to an object so you can't
+deallocate the same memory twice.  But this restriction can also make
+programming with unique_ptr more difficult.  A similar smart pointer
+is shared_ptr, which does allow multiple pointers to the same object,
+but it's not as secure and may still result in memory errors.  There's
+a much more aggressive approach to dealing with memory errors in the
+programming language Rust, but a discussion of it here is out of place.
+
+4.  For most kinds of applications, the easiest way to deal with
+memory allocation errors is to rely on a background process called a
+*garbage collector*, which sweeps the heap for items that are no
+longer being pointed to by anything in your program.  Java was one of
+the first widely accepted, practically oriented language to implement
+this feature, and nowadays it's common place. Most languages now have
+garbage collectors, including the most popular ones (python, C#,
+javascript, etc).  But there are exceptions, including C/C++, Swift
+and Rust.  Garbage collection may not be desirable for low-level
+systems programming, programming for embedded systems with limited
+resources, or for critical real-time applications where speed is
+crucial.  But for the majority of applications-oriented development,
+garbage collection is the norm.
+
+
+                   CALL BY REFERENCE
+
+Passing a pointer by value is often confused with call-by-reference,
+especially by users of Java and similar languages.  In the Java world
+we often use "pointer" and "reference" interchangeably, but in C++
+they're different.  A "reference" is probably better called an
+"alias".  int& x; declares x to be an alias (reference) to another
+variable:
+
+int y = 3;
+int &x = y;
+x = 4;  // this is the same as y = 4, because x is an alias of y
+
+The following function does swap the values of a and b in main,
+because the local variables x and y in swap3 are aliases of a and b in
+main: assigning to them is the same as assigning directly to what they
+alias.
+*/
+
+void swap3(int& x, int& y)
+{
+  x = x+y;
+  y = x-y;
+  x = x-y;  // this swaps two ints without a third variable.
+}
+
+/*
+
+Some young programmers are drawn to *tricks* instead of more important 
+principles. In the above function I used a *trick* to swap two ints 
+without a third variable, but that's just a trick and that should not 
+be your takeaway from this example, which is the difference between 
+passing aliases and passing pointers by value.
+
+Java does not have references in this sense so interchanging
+"reference" and "pointer" is OK, until you move out of Java.
+
+
+           DIFFERENCE BETWEEN MACROS AND FUNCTIONS
+
+Finally, here's another way to define something that swaps two variables,
+but it's a macro, not a function.  For new programmers it's sometimes
+hard to understand the difference between the two, especially when 
+some instructors tell you that "writing functions is just a way to
+avoid typing the same thing over and over...".  Well, the truth is,
+if all you want is to avoid typing something repeatedly, all you need
+is a macro:
+*/
+
+#define swap4(x,y) do { int tmp = x; x=y; y=tmp; } while (0)
+
+/*  "Calling" a macro occurs at COMPILE TIME, NOT AT RUNTIME.  when you
+"call" swap4(a,b); in main it replaces x with a, y with b, and inserts
+the text do .. while into the source code for main before the program
+is ever compiled.  Macro processing is done by the compiler's
+"preprocessor".  It may appear syntactically that the macro works the
+same way as a function.  I even used a *trick* with a dummy do-while
+loop so you can add a ";" at the end of the macro call (see main).
+The { } in the macro in fact also make sure that tmp is a local
+variable and is not confused with other variables of the same name in
+main.  Note that the macro works more like a call-by-reference
+function than a call-by-value one, but in fact it's not a function at
+all. A function is a "black box": a unit of abstraction that operates
+autonomously (self-contained) with respect to the rest of your code.
+A proper function call allows for REFERENTIAL TRANSPARENCY: what you
+see is what you get.  For example, you can compose functions calls:
+f(g(x),h(y)): this has a well-defined behavior if g and h are
+functions, but not if they're macros (it probably won't compile).
+Here's another example of why macros are not like functions:
+*/
+
+#define PI 3.1415927
+#define area(radius) PI*radius*radius
+
+/*
+   The first macro defines a constant, and is a rather safe way of using
+macros, but the second macro tries to replace the work of a function to
+compute the area of a circle.  Does it always work like a function?
+
+cout << area(51); // prints the area of a circle with radius 51 (8171.28)
+
+but
+
+cout << area(0+51); // this prints 51.
+
+Someone is messing around with you poor earthlings. But it's easy to
+see what's happening: PI*0+51*0+51 == 51.  Save your planet from doom
+by learning the difference between macros and functions.  ***A macro,
+unlike a function, is generally NOT self-contained relative to the
+context in which it's used***.  Here's another example:
+*/
+#define checkzero(x) if (x==0) cout << "zero";
+/*
+Consider the following usage of the macro:
+
+int x = 2;
+if (x>=0) checkzero(x)
+else cout << "negative";
+
+This will print "negative": the insertion of the macro call will cause
+the 'else' clause to become associated with the 'if' clause contained
+inside the macro, and not with the outer 'if'.  This was probably not
+the intent, and it will never happen with a function.
+
+Here are some other important reasons of why macros are not the same as
+functions:
+
+  1. A function can be used as a value.  In most modern languages
+  we can pass a function (usually using a pointer) to another function,
+  and even dynamically construct and return a function (called a closure).
+  A macro certainly does not allow such operations.
+
+  2. A recursive macro will result in source code that's infinitely long.
+  Don't say I didn't warn you.
+
+  3. Macros are not checked by the compiler.  When you write a
+  function, the compiler will check if it contains errors so that it
+  will be correct regardless of where you call it, but
+*/
+# define prayer(x) Please God let x work!
+/*
+Will happily be compiled.  
+
+Macros can still be useful if used very carefully, but they're not 
+available in some languages, including Java.
+*/
+
+int main()
+{
+  int a = 2, b = 4;
+  swap1(a,b);
+  cout << a << " and " << b << endl;
+  swap2(&a,&b);
+  cout << a << " and " << b << endl;
+  swap3(a,b);
+  cout << a << " and " << b << endl;
+  swap4(a,b);
+  cout << a << " and " << b << endl;  
+  // Which of these calls actually swapped a and b?
+
+  cout << "area 51 is actually " << area(51) << endl;
+  cout << "but area 0+51 is paranormal: " << area(0+51) << endl;
+
+  return 0;
+}//main
+

@@ -1,0 +1,551 @@
+/*    Professor Liang's Condensed Guide to C++ for Python Programmers
+
+      Chuck Liang, Hofstra University Computer Science, November 2020
+                               
+
+  Python is a good choice as the first language to learn as it allows programmers
+to jump into learning about core programming principles with minimum fuss. It
+also happens to be (as of 2020) a very popular language and is used in a range 
+of applications.  However, there are many different varieties of languages and
+each may have its advantages depending on the applications you're trying to create.
+
+C++ is an older language and is different from Python in many ways.  However,
+once you get used to these differences you will see that the core concepts 
+concerning algorithms and the application of logical principles will still apply.
+
+This guide is not intended to be exhaustive, but will hopefully dampen the shock
+you may experience when confronted with C++ for the first time.  C++ is a very
+large language and many features have been piled on top of each other. Your 
+instructor will most likely just choose a subset of these features.  In 
+particular, C++ underwent a significant upgrade in 2011 but not everyone uses 
+its new features.  Thus, some of the examples below may not fit exactly with how 
+your instructor want you to do things, but this guide should still be of some 
+help to you.
+
+This guide is also intended for students who took their first semester
+Python programming class from its author.  Other students may be
+unfamiliar with certain concepts, and may not benefit as much from
+this guide.  You can find more comprehensive guides to C++ for Python
+programmers online, such as here:
+https://runestone.academy/runestone/books/published/cpp4python/index.html
+
+We'll go through some of the most important differences between Python and C++
+before presenting a complete program.  I won't spend much time explaining the
+stylistic differences as those you should be able to figure out yourself (like
+how to write comments).
+
+******************   1. C++ is "Statically Typed".  ****************
+
+ This means that, unlike Python, before you use a variable in a program you
+ must *declare* it along with its type.
+
+ int x;  // this declares x to be used as an integer variable in this scope
+ x = 2;  // assigns a value to a declared variable (won't work without line above).
+ string y = "abc"; //declares y to be a string variable and give it an initial value
+ x = x+1; // your math prof won't like C++ any better than python :)
+ //x = y; // THIS IS NOT ALLOWED: an integer variable cannot be assigned to a string.
+
+ You cannot reassign a variable to a value of a different type.  However, inside
+ different scopes (different functions), you can declare another local variable 'x'
+ to have a different type.  Types are also an important concept in Python:
+ you can't add an integer to a string without converting from one to the other.
+ But in C++ types are more strictly enforced, and the syntax of the language
+ requires you to declare types and (unlike Python), you cannot change the type
+ of a variable (unless it's a local variable in another scope).
+
+ //x = 3.1; // 3.1 is a "floating point number" and you can't do this assignment
+ x = (int)3.1; // without converting it to an integer (this will reassign x to 3).
+ y = "12";     // to convert this string to the number 12 we need ..
+ x = stoi(y);  // the 'stoi' built-in function (since C++ 2011).
+
+*** Note that there is a ; at the end of each line of code.  This is required.
+
+*** Note: the latest versions of C++ can figure out the type of a variable on
+    its own:
+
+    auto x = 1;  // same as int x = 1;
+   
+    But this DOES NOT MEAN that x now works like a Python variable: you still
+    can't reassign x to anything but integers.  I recommend that you DO NOT use
+    the 'auto' feature when you're learning C++ initially.
+
+
+    ******   1b.  Functions Also Have Types  ******
+
+    It's not just simple variables that have types. Writing a function 
+    also requires specifying its type first.  The type of a function consists
+    of its domain and codomain (or "range").  
+
+    The following python function computes the gcd of two integers:
+    def gcd(a,b):
+      while a!=0 and b!=0:
+          if a>b: a=a%b
+          else: b=b%a
+      return a+b  # the non-zero value will be the gcd
+    
+    This function can be written in C++ as
+
+    int gcd(int a, int b)
+    {
+       while (a!=0 && b!=0)
+       {
+         if (a>b) a=a%b;
+         else b=b%a;
+       } // ends body of the while loop
+       return a+b; // the type of this expression must match the return type of gcd
+    }
+
+    The first line, int gcd(int a, int b), declares that gcd is a function
+    that maps a pair of integers (domain) into an integer (codomain).  
+
+***  SYNTACTIC NOTES:  Unlike Python, C++ does not use indentation to determine
+     scope.  Instead, { }'s are used.  Everything that belongs inside a pair
+     of these braces consist of one block of code that's executed as a unit.
+     HOWEVER, AS A MATTER OF GOOD PROGRAMMING PRACTICE, YOU SHOULD STILL INDENT
+     YOUR CODE LIKE YOU DO IN PYTHON.
+
+*** WATCH OUT:  In python, you can also use ; to do more than one thing on one line:
+
+    if 2<1: print("A"); print("B");
+
+    This will not print anything in Python.  However, in C++:
+
+    if (2<1) cout << "A\n"; cout << "B\n";  // prints "B".
+
+    'cout' is used to print and you can separate different items to
+    print with <<.  But just because the two couts are on the same
+    line doesn't mean they are grouped together: to group them
+    together you need to wrap them inside {}'s.  This is the reason
+    wise instructors didn't teach you certain things in Python.
+
+    Also note that the () around the boolean conditions (a>b) and 
+    (a!=0 && b!=0) are required.  You can guess what && means.  || means 'or';
+    !a means not(a).  Also, 1 can be used for true and 0 can be used for false.
+    The type of boolean values is 'bool'.
+
+
+    Sometimes you will see that we declare the type (or "signature") of a 
+    function then define its body later:
+
+    int gcd(int a, int b); // this means the body of gcd will be given later
+    int gcd(int,int); // variable names are not required in such declarations
+
+    When a function does not return a value, its codomain is 'void'.
+
+
+        *************   1c.  The "main" function  *************
+
+    In C++ (as with many other languages), you can't just start writing while
+    loops and for loops without writing a function.  Most of your code must be
+    written inside functions.  The function that's called first when your 
+    program runs must be called
+
+    int main()   // this function should return 0 at the end
+
+    This is the ENTRY POINT of your program.
+   
+
+ ******************* 2. C++ is a "Compiled" Language. *******************
+
+    Unlike Python, a C++ program first need to be compiled into an
+    executable program (machine code) before it can run.
+
+*** To compile and run this program, type in a terminal (such as a Linux VM):
+   
+    g++ transitionguide.cpp    (should work on your Linux VM)
+
+    On some systems, the latest features of C++ (such as the stoi function)
+    will not compile unless you give the compiler the following option:
+
+    g++ transitionguide.cpp -std=c++11    (or -std=c++17)
+
+    Running the compiler like this will produce an executable file called
+    'a.out' on Linux systems and 'a.exe' on Windows.  Run the program with
+    the shell command
+*** 
+    ./a.out        (or ./a.exe on windows).
+
+    You can rename a.out to another filename with mv, or give g++ the option
+
+    g++ transitionguide.cpp -o  tguide
+
+    This will produce tguide.out as the executable.  
+
+    Python, on the other hand, is called an "interpreted" language
+    which means a program can be executed directly.  Which do you
+    think is faster?  A C++ program can be more than 100 times faster
+    than a Python program that implements the same algorithm.  But
+    this should not discourage you from continuing to use Python for
+    the numerous applications for which it is "fast enough".  A more
+    important advantage of a compiled versus an interpreted language
+    is that there's a better chance for errors to be caught and
+    corrected before the program ever runs.  Compiler errors are far
+    less costly than "runtime" errors.  For example, you can have an
+    if-else statement that contains an error in the else-statements.
+    But unless the else-statements get executed, you won't detect the
+    error: this can mean that errors are not detected until it's too
+    late. A compiled language will have a better chance of detecting
+    such errors.
+
+    Assuming you can now compile and run a C++ program, the rest of
+    the tutorial will continue in main below (this first part of which
+    just repeats the code we wrote above).
+*/
+
+#include<iostream>  /* required for printing using cout, input using cin */
+#include<cstdio>    /* required for traditional C-style IO (printf and scanf) */
+#include<cmath>     /* required for certain built-in math functions, such as pow*/
+#include<string>    /* required for string type, otherwise need to use char* */
+#include<vector>    /* required for vector class */
+#include<memory>    /* required for unique_ptr */
+using namespace std; // without this you'll need to use std:: before many functions
+
+
+uint64_t gcd(uint64_t,uint64_t); // function will be defined after main.
+// uint64_t is the type of unsigned (non-negative) 64 bit integers.
+void swapsort(int[], int);  // declares swapsort function's type ([] means array).
+
+int main()  //could be int main(int argc, char** argv) for command-line args
+{ 
+ //// Variables must observe their type:
+ int x;  // this declares x to be used as an integer variable in this scope
+ x = 2;  // assigns a value to a declared variable (won't work without line above).
+ int x2 = 3; // declares variable and give it an initial value in one line.
+ string y = "abc"; //declares y to be a string variable and give it an initial value
+ x = x+1; // your math prof won't like C++ any better than python :)
+ //x = y; // THIS IS NOT ALLOWED: an integer variable cannot be assigned to a string.
+ //x = 3.1; // 3.1 is a "floating point number" and you can't do this assignment
+ x = (int)3.1; // without converting it to an integer (this will reassign x to 3).
+ y = "12";     // to convert this string to the number 12 we need ..
+ x = stoi(y);  // the 'stoi' built-in function (since C++ 2011).
+ y = to_string(x); // this converts integers to strings (since C++ 2011).
+ double xx = 3.14; // a 64-bit, "double precision" floating point number
+ bool boolean_var = 0; // 0 is false, if it's not 0 it's true.
+ auto y2 = "xyz";  // don't use auto before you learn manual ...
+ //y2 = 3; // still gets compiler error: "auto" does not make a variable untyped.
+ 
+///Uncomment one of the lines above to see your first ***compiler error*** YEAH!
+
+  // calling gcd function implemented below
+ cout << gcd(12,8) << endl; // prints 4, calls functions implemented below
+ // cout prints items, 'endl' is newline
+ 
+ /* *********** 3. In C++, numerical types have size restrictions. *********
+
+  Unlike Python, numerical types have fixed size in bytes.  This means you 
+  can't assign a value that's too large to an int:
+ 
+  int x = 8397200000000000000000000; // error: "...to large for this type"
+ */
+ int big = 2000000000; // two billion, close to max size of 32-bit signed integers
+ x = big*big; // gets an "overflow" value: value will be WRONG.
+ cout << "x is now "<< x << endl; // prints x is now -1651507200
+// Although the code above compiles, don't expect x to hold the correct
+// value of 2-billion squared: you will likely get a negative number because
+// the muliplication "overflowed" the size of int, which is usually 4 bytes.
+/*
+   The really scary part is that the above code still compiled and still ran,
+   but with obviously the wrong result.  Unfortunately, preventing this kind of
+   thing from happening is not easy in C++.  You just have to be aware that
+   with 32 bits, the largest unsigned (positive) integer is 2**32-1 and
+   if the integer is signed, then it's 2**31 -1.   To detect that overflow
+   occured in the above situation, you can do:
+*/
+ if (x/big != big) cout << "overflow! don't use x!\n";
+
+/*
+  There is no built-in type for integers of unlimited size: you will have
+  to simulate them with strings or some other data structure.  
+  There are third-party libraries of "bigint" implementations.
+  
+
+  NOTE:  The ** operator is not supported in C++, but there is a built-in function
+
+  double pow(double base, double exponent); // require #include<cmath>
+
+  "double" is the type of 64-bit (8-byte) floating point numbers, the most common
+  type for "floats". You can call it like this:
+*/
+ int max = (int)(pow(2,31)-1); // sets max to largest possible value for int
+ cout << (max == 0x7fffffff) << endl; //use hexadecimal if you're a real geek.
+ unsigned int maxx = (unsigned int)(pow(2,32)-1); // unsigned integer type
+
+ /* 
+    C++ is also a bit different from other modern languages as it is more
+    "system" dependent: which means it may behave differently depending on the
+    the operating system and hardware available.  Python will mostly abstract
+    away such differences.  On some systems, the type of 'int' may be 8 bytes.
+    How do you find out?
+ */
+ cout << sizeof(max) << endl; // this will print 4 or 8 (bytes)
+ cout << sizeof(xx) << endl; // this line will print 8 (double is always 8 bytes)
+ long lx = 1;
+ cout << "size of long: " << sizeof(lx) << endl; // likely prints 8
+ // Each integer type can be signed (default) or marked unsigned.
+
+ /**********  Since C++ 11, the following standards were adopted so
+  as to avoid the confusion over the sizes of types, but these aren't used
+  by everybody:
+*/
+ int32_t x3 = -1; // guaranteed to be 4 bytes
+ int64_t x4 = 3-5; // guaranteed to be 8 bytes
+ uint64_t x5 = 3-5; // guaranteed to be unsigned 8 bytes, so what do you get here?
+ cout << "3-5 as an unsigned integer is " << x5 << endl;  // warning: SCARY OUTPUT
+
+ // Assigning 3-5 to an unsigned-tyed value creates "underflow", resulting in an
+ // invalid value.  This is because all values are binary underneath and 
+ // "signed" and "unsigned" are just different ways of interpreting the same bits.
+ // With C++ you need to be more aware of how data is represented at the 
+ // binary level.
+
+ // Recall that y was declared as a string variable:
+ y = "hello";
+ cout << "size of string var: " << sizeof(y) << endl; //this prints 8, NOT 5.
+ // the size of a string variable is 8 because it's a memory address to where
+ // the string is stored.  To find the length of a string, you need:
+ cout << "length of string: " << y.length() << endl;
+ // As you can see, a "string" is actually an object and C++ certainly has
+ // classes and objects.
+
+/*
+   //////////////////// Arrays and Vectors //////////////////////
+
+   Arrays in C++ (and traditional C) are declared and used as in these examples:
+*/ 
+ int A[4] = {3,1,7,5}; // declare and initialize an array of 4 values
+ size_t array_size = 100; // keep track of array size;
+ int B[array_size];           // just declare the array, assign later:
+ for(int i=0;i<array_size;i++)
+ { B[i] = i*i; }
+ //This for loop, which assigns a value to each B[i], is not like a Python
+ //for loop, which should properly be called a "foreach" loop.  This for-loop
+ //is equivalent to:
+ int i = 0;
+ while (i<100)
+   {
+     B[i] = i*i;
+     i +=1;   // i++ means i=i+1;
+   }
+ // However, the variable i is local inside the for loop and NOT AVAILABLE
+ // once the loop finishes.
+
+ // The kind of for loop in Python, which iterates over the CONTENTS of arrays,
+ // was not introduced to C++ until 2011:
+ for(int x:A) cout << x << " ";  cout << endl; // prints 3 1 7 5, C++11 or later 
+
+ // Also note, there is no length function for arrays. You have to keep track
+ // of that in a separate variable.  If you pass an array to a function, you
+ // must pass it an additional variable with the size.  Like in Python, when
+ // you pass an array to a function you're only passing a pointer, so the
+ // 'swapsort' function below will in fact sort the array that's pointed to
+ // by the pointer passed to it.
+
+ swapsort(A,4); // sorts the array, must pass size as separate arg.
+ for(int x:A) cout << x << " ";  cout << endl; // prints 1 3 5 7
+
+ //// However, you cannot change the size of an array once it's declared.
+ //// You can think of the size of the array as part of its *type*.  So
+ //   don't expect an equivalent to .append or .pop() like in Python.
+ //// For that kind of "array", the closest that C++ has is the built-in
+ //// "standard library" class called vector.  However, there is a key 
+ //// difference awaiting you with vectors: when you pass a vector to a function,
+ //// you're not passing a pointer but a COPY of the vector.  To understand this
+ //// point fully, we'll have to go deep into a discussion concerning C++
+ //// pointers and memory management. 
+
+ return 0; // this is usually the last line in main and returning 0 means that
+           // the program ran successfully.
+}//main
+
+// implementing the gcd function declared before main
+uint64_t gcd(uint64_t a, uint64_t b)  
+{
+  while (a!=0 && b!=0)
+  {
+    if (a>b) a=a%b;
+    else b=b%a;
+  } // ends body of the while loop
+  return a+b;
+}//gcd - this function returns 0 if both a,b are 0, which indicates an error
+
+void swapsort(int A[], int length) // takes pointer and length and sorts array
+{
+  for (int i=0;i<length-1;i++)
+    {
+      int smi = i; // index of smallest value starting at index i
+      for(int k=i+1;k<length;k++)
+        { if (A[k]<A[smi]) smi=k; } // update smi
+      int temp = A[i];// swap A[i] and A[smi]
+      A[i] = A[smi];
+      A[smi] = temp;   // can't do simultaneous assignment to tuple in C++
+    }
+}//swapsort - not the most efficient sorting algorithm, only used for illustration.
+
+/////////////////////////// END OF BASIC TUTORIAL ////////////////////////////////
+
+
+
+/////////////////////////// More Advanced Stuff /////////////////////////////////
+
+void f2(vector<int> V)  // function that takes a vector as an argument.
+{                       // V is NOT a pointer but a new copy of the vector
+  for(int i=0;i<V.size();i++)  V[i] *= 2; // try to double each value in vector
+}
+
+void f3(vector<int> *V) // function that takes a *pointer* to a vector
+{
+  for(int i=0;i<(*V).size();i++)  (*V)[i] *= 2; // try to double each value in vector
+}
+
+/*
+The Real Story:
+
+ 'vector' is a class, like the simple class for a bank account below.  I will
+not bother going over the details of how to define classes in this transition
+guide, except to say that, like in Python, a C++ class has a constructor,
+instance variables, and methods.  The 'self' argument in C++ is called 'this',
+but it is usually implied and not seen in the syntax. 
+*/
+
+// a sample class in C++
+class bankaccount
+{
+private:
+  double balance;  // instance variable, visible only to other bankaccount objects
+public:
+  bankaccount(double initbalance) { balance=initbalance; } // constructor
+  void withdraw(double amount)
+  {
+    if (amount<balance && amount>0) balance -= amount;
+  }
+  double inquiry() { return balance; }
+}; //bankaccount class - ; required here
+
+/*
+  However, unlike Python, instance of classes are not necessarily always 
+pointers to objects on the heap. In C++ there are two ways to create objects
+(instances) of a class:
+
+bankaccount myaccount(1000); // creates a bank account object on the stack
+myaccount.withdraw(50);
+bankaccount *youraccount = new bankaccount(2000); // creates object on the heap.
+youraccount->withdraw(50); // same as (*youraccount).withdraw(50);
+
+Unlike Python, the syntax of C++ makes it clearer when a pointer is
+being used.  bankaccount * means pointer to bankaccount object.  Given such
+a pointer (youraccount), *youraccount "dereferences" the pointer and refers to
+the actual object. 
+
+The first way of creating objects (myaccount) is preferred in C++,
+although the second form (with a pointer) is sometimes not avoidable.
+This is because, unlike Python, C++ does not have a "garbage collector".
+
+If you understood the lectures on Python objects, when we create an instance of
+an object often only a pointer is allocated on the stack while the object itself
+is allocated on the heap.  When a function exits (returns), its stack frame is
+"popped" and  all local variables, including pointers, are thus deallocated 
+(deleted) automatically.  But what about the actual objects on the heap?
+If a function creates objects on the heap and deletes all pointers to those
+objects, then it creates a "memory leak": if this function is called repeatedly,
+it will eventually use up all memory.  In Python, as in many other languages,
+there is a background process called a "garbage collector" that kicks in when
+memory usage is high, and cleans up (deletes) all heap objects that have nothing
+pointing to them.  C++ (except for specialized versions) does not have a garbage
+collector.  So if you allocate objects on the heap, you as the programmer will
+be responsible for deallocating it at the right point of your program.
+
+However, if the object is entirely allocated on the stack, then it will be
+destroyed when the stack frame is popped, and so memory allocation becomes 
+easier.  That's why it is often preferrable to NOT use pointers to refer to
+objects in C++;
+
+Memory errors occur easily when you use pointers and "new", which allocates
+memory on the heap.  For example:
+
+bankaccount* youraccount = new bankaccount(2000); // creates object on the heap.
+youraccount = new bankaccount(4000); // change pointer to point to another account
+
+The first line creates a bankaccount object on the heap and points youraccount
+to it.  The second line creates another bankaccount object, and changes youraccount
+to point to the new object,  But now nothing points to the first object that was
+created, which is still on the heap: this is a memory leak.
+
+In C++, when you pass objects to functions, you can also choose between passing
+a pointer, or passing a copy of the object itself.  The following functions 
+illustrate these ideas.
+*/
+
+
+// Function that takes copy of object as an argument
+void g(bankaccount B)
+{
+  B.withdraw(50); // this only affects the local copy of the object
+}
+// function that takes pointer to object
+void g2(bankaccount *B) //
+{
+  B->withdraw(50); // this will have effect outside of the function.
+  (*B).withdraw(50); // same as above
+}
+
+// Function that creates a heap-allocated object which must be deallocated,
+// lest there be MEMORY LEAKS
+void memoryleak() 
+{
+  bankaccount *B = new bankaccount(100); // "new" allocates memory on the heap
+  //delete(B); // deallocates heap-allocated memory
+}
+// Without delete(B), only the pointer B is deleted on exit, not the actual object,
+// thus creating a memory leak.  But where to call delete can be tricky: you
+// must make sure that the object is not pointed to by some other pointer in
+// your program, and you must not call delete on the same memory twice.  
+
+////// MORE ADVANCED ...
+// Safer way to create heap allocated objects: a "unique pointer" (std::unique_ptr)
+// is a C++ 2011 construct that encapsulates a real pointer.  A unique pointer
+// is uniquely responsible for deallocating the memory that it points to.
+// When the unique_ptr is popped off the stack, the heap memory that it encapsulates
+// is also deleted, and since it's unique, there cannot be multiple calls to
+// delete the same memory.
+void nomemleak() 
+{
+  unique_ptr<bankaccount> B(new bankaccount(100));  // requires #include<memory>
+  B->withdraw(100); // use B like a "regular" pointer
+  cout << B->inquiry() << endl;
+  unique_ptr<bankaccount> C(new bankaccount(200));
+  B = move(C); // original object that B points to is deleted, and the pointer
+  // to the object is moved from C to B.
+}
+// When you assign one unique_ptr to another, the 'move' keyword must be used.
+// Unlike with oridinary pointers, the memory that B points to is first deleted
+// before B is assigned to C: the responsibility of deleteing the memory that
+// C points to is "moved" to B.
+// However, if you want multiple pointers to point to the same object
+// then you can't use unique_ptr.  You also shouldn't mix unique_ptr with
+// regular, unprotected pointers.  shared_ptr is similar to unique_ptr and
+// allows multiple pointers to point to the same object, but is not as secure.
+// Despite the simple example above, unique_ptr can be difficult to use, 
+// especially for beginners. But it's the most advanced way to manage memory
+// in C++.
+
+
+int main2() // to try this out, rename this main() and rename the earlier main
+{           // to something else.  There can only be one main in a program.
+  vector<int> V(3); // declare vector with initial capacity
+  V[0] = 1;
+  V[1] = 3;
+  V[2] = 5;
+  V.push_back(7); // like .append in python // now size is 4
+  for(int x:V) cout << x << " ";
+  f2(V); // will this change the local V?
+  cout << " ... did it change?\n"; // NO IT DID NOT CHANGE!
+  f3(&V);
+  for(int x:V) cout << x << " ";  
+  cout << " ... did it change?\n"; // Yes, this time it changed
+
+  memoryleak();
+
+  nomemleak();
+  
+  return 0;
+}// main2
