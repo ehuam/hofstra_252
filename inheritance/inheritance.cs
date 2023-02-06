@@ -44,7 +44,8 @@ public class inheritance
   
     //    m = new AA(1);
     ((BB)m).h();  
-
+    //m.h();
+    
     q(m); // which q will be called?  // no dynamic dispatch here!
 
   }//Main
