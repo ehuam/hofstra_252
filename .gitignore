@@ -3,6 +3,6 @@
 
 
 # Ignore folders that are created by dotnet
-obj/
-bin/
+**/obj/
+**/bin/
 
