@@ -33,6 +33,7 @@ int main()
   
   x = new AA(1);   // change x to an AA object
   ((BB*)x)->h();   // RUN FOR YOUR LIFES!
+  //x->h();   // RUN FOR YOUR LIFES!
   return 0;
 }
 
