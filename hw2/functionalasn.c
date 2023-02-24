@@ -283,24 +283,26 @@ int main()
 {
   list m = cons(2,cons(3,cons(5,cons(7,cons(11,NIL)))));
   // ... demonstrate all your functions ...
+
 list doubleup(list m)
   {
-    if (m == nil) { return m;}
+    if (m == NIL) { return m;}
     list newlist = cons ( car(m), cons ( car (m), 
-                          double(cdr(m))  ));
+                          doubleup(cdr(m))  ));
   }
+//printf("%d %d", car(doubleup(m)), car(cdr(doubleup(m))));
 
 list doubleupT(list m){
 
   list doubleup(list m, list stack){
     if( m == NIL) return stack;
     else{
-      return doubleup(cons(car(m), cons(car(m), cdr(m)));
+      return doubleup(cons(car(m), cons(car(m), cdr(m))) );
     }
   }
   return doubleup(m,NIL);
 }
-
+/*
 //2 
 typedef void (*actionon)(int);
 
@@ -347,7 +349,7 @@ list sublist(list m, list n){
 return forall(car(m) == car(n), )
 
 }
-
+*/
 
 
   return 0;
