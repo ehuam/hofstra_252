@@ -1,0 +1,386 @@
+	Lambda Calculus Homework SOLUTIONS and Quiz study guide
+
+The quiz will consist largely of problems similar to those on the homework.
+I will provide definitions of S and some of the other larger combinators (FIX, Church numerals) if you need them.  However, you should know what I and K are
+and how they're related to True, False and if-else.  You also need to know
+how to define the boolean operations and data structures (cons, car, cdr).
+
+In addition to basic lambda calculus (beta reduction, alpha conversion), 
+you need to study the following:
+
+A. Difference between call-by-value and call-by-name
+      What are the relative advantages?
+      What is the Church-Rosser Theorem?
+
+B. Are there terms that have no normal form?  
+      
+C. How to define ifelse, booleans and data structures (cons, car and cdr)
+
+D. You don't need to remember the lambda-terms for Church numerals,
+   and you don't need to remember the FIX combinator: if I ask you to
+   solve a problem with them, I will supply their definitions.
+
+E. What does the Halting problem say (you don't need to reproduce the
+   proof, but you need to know what the result is in terms of lambda-calculus.
+
+F. What does "static scoping" mean and why is lambda calculus statically scoped.
+
+G. NOT ON THIS QUIZ, BUT IMPORTANT: What is the type soundness or "subject reduction" theorem of typed lambda
+   calculus.
+
+----------------------------------------------------------------------
+			
+
+0. Identify the free and bound variables in the following term:
+
+   lambda u. lambda x. [y (lambda y.x y) u y]
+                        ^                  ^
+                        these are the only free vars.
+					 
+   The other y is bound by the lambda y.  Remember that free/bound is
+   dependent on the term in question.  Here's another example:
+
+   (lambda x. x(lambda x.x))  t
+
+   This term reduces to t(lambda x.x).  The outer x is FREE relative to
+   the body of the entire lambda term.
+
+1. Determine if the following pairs of terms are alpha-equivalent.
+
+   a.  lambda x.lambda y. (x y x)  and
+       lambda x.lambda y. (y x y)
+
+       One trick is to change the bound vars to numbers: x is 1 and y is 2
+       NO  - the first is 1 2 1 , the second is 2 1 2
+
+   b.  lambda x. lambda y. x (lambda y.x) y   and 
+       lambda a. lambda b. a (lambda u.a) b
+
+       YES - the inner lambda y can be alpha converted to lambda u
+
+
+For the rest of the problems, find the beta-normal forms of the
+following terms.  Remember: you can rename bound variables to
+avoid clash, but never free variables.
+
+2. (lambda x.lambda y. (y x)) u (lambda x.x)
+    -> (lambda y. (y u)) (lambda x.x)
+    -> (lambda x.x) u
+    -> u
+
+  >> WARNING: I will sometimes combine up to 2 steps (-->) in the
+      following solutions.  I'll also use the book's notation lambda
+      xy to mean lambda x.lambda y - use the form you're comfortable
+      with.
+
+3. given S, K, I as they are in the handout, find the normal forms
+   of KII, SIK, SK(KI), and S(KI).  Application associates to the left, 
+   and the order is important.  Also remember that application binds 
+   tighter than lambda-abstraction, so (lambda x.x y) is NOT the same
+   as (lambda x.x) y.
+
+3. given S, K, I as they are in the handout, find the normal forms
+   of II, KIK, SIK, and S(IK).  Application associates to the left, 
+   and the order is important.  
+
+   **Other versions of this question may ask you to find KII, SK(KI) and S(KI).
+
+   >> S = (lambda xyz.(x z)(y z))
+      K = (lambda xy.x)
+      I = lambda x.x
+
+axioms: IA = A for any A
+        KAB = A for any A, B
+        KIAB = B for any A,B because KI = lambda x.lambda y.y
+
+   KII = (lambda x.lambda y.x) I I 
+       -> (lambda y.I) I  -> I
+
+   SK(KI) = (lambda xyz.x z (y z)) K (KI)
+        --> lambda z. K z (KI z)
+        -> lambda z.z       (since KAB = A)
+
+   S(KI) = (lambda xyz.x z (y z)) (KI)
+       --> lambda y.lambda z KI z (y z)
+       --> lambda y.lambda z. y z    (since KIAB = B)
+
+
+    II = (lambda x.x) (lambda y.y) -> lambda y.y = I
+
+    KIK = [(lambda xy.x) (lambda u.u)] K
+    -> (lambda y.lambda u.u) K
+    -> lambda u.u
+   (there's no y in the body (lambda u.u), so it doesn't change)
+
+   SIK = (lambda xyz.(x z)(y z)) I K
+   -> (lambda yz.(I z) (y z)) K
+   -> lambda z.(I z) (K z)   (I will choose to reduce (I z) first:)
+   =  lambda z.([lambda u.u] z) ([lambda ab.a] z)
+   -> lambda z.z ([lambda ab.a] z)
+   -> lambda z.z (lambda b.z)
+
+   S(IK) = S ((lambda a.a) K)
+   -> S K 
+   = (lambda xyz. x z (y z)) (lambda ab.a)
+   -> lambda yz. (lambda ab.a) z (y z)
+   --> lambda yz.z 
+   (here, I combined two steps, 
+     (lambda ab.a) z (y z) -> (lambda b.z) (y z) -> z)
+
+
+4. given A = lambda m.lambda n.lambda f.lambda x. m f (n f x),
+         T = lambda m.lambda n.lambda f.lambda x. m (n f) x
+	 Zero = lambda f.lambda x.x
+         One = lambda f.lambda x.(f x)
+         Two = lambda f.lambda x.f (f x)
+
+   Find the normal form of (A Two One).
+
+>> A 2 1 = lambda f.lambda x.2 f (1 f x)  .. (1 f x) reduces to (f x)
+-> lambda f.lambda x.2 f (f x)  .. 2 f reduces to lambda x.f (f x)
+-> lambda f.lambda x. (lambda x.f (f x)) (f x)
+-> lambda f.lambda x. f (f (f x))) = 3
+
+   Then find the normal form of (T Zero Two)
+
+>> T 0 2 -> lambda f.lambda x. 0 (2 f) x, where 0 = KI = lambda u.lambda v.v
+-> lambda f.lambda x. (lambda u.lambda v.u) (2 f) x
+-> lambda f.lambda x.x = 0
+
+That is, 0 = lambda f.lambda x.x, is the same as (alpha equivelent to)
+ lambda u.lambda v.v, which is the same as KI (choose second option),
+ and KIAB = B, so KI (2 f) x = x.
+
+   What do A and T stand for?
+
+>> Add and Times
+
+
+## alternative versions of problem 4:
+4b. given A = lambda m.lambda n.lambda f.lambda x. m f (n f x),
+         T = lambda f.lambda x.f (f x)
+
+ >> ATT = (lambda mnfx.m f (n f x)) T T
+  --> lambda fx. T f (T f x)
+  = lambda fx. [(lambda gy.g (g y)) f (T f x)]  - I choose call by name
+  -> lambda fx. [(lambda y.f (f y)) (T f x)]
+  -> lambda fx. f (f (T f x))
+  =  lambda fx. f (f ([lambda gy.g (g y)] f x))
+  -> lambda fx. f (f ([lambda y.f (f y)] x))
+  -> lambda fx. f (f (f (f x)))
+
+  ** Call by value alternative: **
+  ... lambda fx. T f (T f x)
+  = lambda fx. T f ([lambda gy.g (g y)] f x)
+  -> lambda fx. T f ([lambda y.f (f y)] x)
+  -> lambda fx. T f (f (f x))
+  = lambda fx. (lambda gy. g (g y)) f (f (f x)) - careful with the ()'s!
+  -> lambda fx. (lambda y. f (f y)) (f (f x))
+  -> lambda fx. f (f (f (f x)))
+
+
+   find the normal form of (A T T).
+   Conjecture what would happen if T = lambda f.lambda x.f (f (f x)).
+
+   ( T is the "Church representation" of the number 2, and A represents
+     Addition - Church originally formulated the lambda calculus as a
+     symbolic foundation for all of mathematics.)
+
+4b (challenge) Church exponentiation, m to the nth power, is lambda
+   m.lambda n.(n m).  Show that 3 to 2nd power = 9 using the Church
+   representation.  Some web sites shows this combinator as 
+   lambda m.lambda n.(m n).  These sites are wrong as the following proves:
+
+   2 = lambda f.lambda x.f (f x)
+   3 = lambda g.lambda y.g (g (g y))  (alpha converted to avoid confusion)
+
+  3**2 = (lambda m.lambda n. (n m)) 3 2 -->
+       (2 3) = lambda x.3 (3 x) --> 
+       lambda x.(lambda g.lambda y.g(g(g y))) (3 x) -->
+       lambda x.lambda y.((3 x) ((3 x)((3 x) y)))
+          where (3 x) = lambda y.x (x (x y)), thus (reducing innermost first)
+          ((3 x) y) =(3 x y) -> x (x (x y)), so
+          ((3 x)((3 x) y))) -> (3 x) (x (x (x y))) ->
+          (x (x (x (x (x (x y))))), so 
+          ((3 x) ((3 x)((3 x) y))) -> (x (x (x (x (x (x (x (x (x y)))))))))
+   Thus the final term (normal form) is 
+   lambda x.lambda y.(x (x (x (x (x (x (x (x (x y))))))))), which is
+   alpha-equivalent to lambda x.lambda y.(f (f (f (f (f (f (f (f (f y)))))))))
+
+
+Additional example: 2**3 == 8:
+
+   2**3 = (lambda m.lambda n. (n m)) 2 3
+      --> (3 2) = (lambda g.lambda y.g (g (g y))) 2
+       -> lambda y. 2 (2 (2 y))    
+       -> lambda y. 2 (2 (lambda x. y (y x)))  (reduced 2 y first)
+       ->   ... reducing 2 (lambda x. y (y x))...
+lambda y. 2 (lambda x'. (lambda x. y (y x)) ((lambda x. y (y x)) x'))
+       -> ... reducing right-most inner-most redex...
+lambda y. 2 (lambda x'. (lambda x. y (y x)) (y (y x')))
+       -> reducing inner-most redex again...
+lambda y. 2 (lambda x'. (y (y (y (y x')))))
+       -> 
+lambda y.lambda x. (lambda x'. (y (y (y (y x'))))) ((lambda x'. (y (y (y (y x'))))) x)
+       ->  continue inner-most strategy
+lambda y.lambda x. (lambda x'. (y (y (y (y x'))))) (y (y (y (y x))))
+       ->
+lambda y.lambda x. (y (y (y (y (y (y (y (y x))))))))
+ and this is alpha-equivalent to Church numeral 8.
+
+
+5. Given T = lambda x. lambda y. x
+         F = lambda x. lambda y. y
+         C = lambda p.lambda q. (p q F)   (where F is as above)
+  
+         and
+ 
+         D = lambda p.lambda q. (p T q)   (where T is as above)
+
+   Find the normal forms of:
+      
+      a. (C F F)
+      b. (C F T)
+      c. (C T F)
+      d. (C T T)
+
+   Also, find the normal forms of 
+
+      a. (D F F)
+      b. (D F T)
+      c. (D T F)
+      d. (D T T)
+
+  CFF = (lambda pq.p q F) F F
+   -> (lambda q.F q F) F
+   -> F F F
+   = (lambda xy.y) F F
+   -> (lambda y.y) F
+   -> F
+
+   CFT = (lambda pq.p q F) F T
+   --> F T F
+   = (lambda xy.y) T F
+   --> F
+
+   CTF = (lambda pq.p q F) T F
+   --> T F F
+   = (lambda xy.x) F F
+   -> (lambda y.F) F
+   -> F
+
+   CTT = (lambda pq.p q F) T T
+   --> T T F
+   = (lambda xy.x) T F
+   --> T
+
+
+
+In class I may have defined and as (lambda pq. if p q F), but this 
+beta-reduces to (lambda pq.p q f) since if is just (lambda abc.a b c)
+
+Similarly, find the normal forms of
+      
+      a. (D F F)
+      b. (D F T)
+      c. (D T F)
+      d. (D T T)
+
+D is "if (p) return true; else return q":
+
+      DFF = (lambda pq.p T q) F F
+      -> (lambda q.F T q) F
+      -> F T F
+      = (lambda xy.y) T F
+      -> (lambda y.y) F
+      -> F
+
+      DFT = (lambda pq.p T q) F T
+      --> F T T
+      = (lambda xy.y) T T  
+      --> T
+
+      DTF --> T T F  --> T   (T=K and chooses the first option)
+   
+      DTT --> T T T --> T
+
+D is "disjunction", boolean or.
+
+    
+6. Let T and F be as they were in the above problem, and let
+   N = lambda x. (x F T)
+
+   what are the normal forms of 
+
+      a. (N F)
+      b. (N T)
+      c. (N (N T))
+
+>> NF = (lambda x.(x F T)) F
+    -> F F T
+    = (lambda xy.y) F T
+    -> (lambda y.y) T
+    -> T
+
+    NT = (lambda x.(x F T)) T
+    -> T F T
+    = (lambda xy.x) F T
+    --> F
+
+   N(NT) --> NF  (by reduction above, which shows that NT-->F)
+   ---> T (by first reduction above, which shows that NF--->T)
+
+   N is boolean negation.
+
+
+7. Let T and F be as above and let IF = lambda c.lambda a.lambda b.(c a b).
+   Find the normal forms of
+
+   (IF T A B)
+
+>> (lambda c.lambda a.lambda b.(c a b)) T A B  --> (T A B)
+== (lambda x.lambda y.x) A B --> (lambda y.A) B -->  A
+
+   (IF F A B)
+
+>> (lambda c.lambda a.lambda b.(c a b)) F A B  --> (F A B)
+== (lambda x.lambda y.y) A B --> (lambda y.y) B -->  B
+
+
+8. let PAIR = lambda a. lambda b. lambda c. (c a b)
+   let FST = lambda p. p T   (where T is as above)
+   let SND = lambda p. p F
+   let M = (PAIR a (PAIR b c))
+   Find the normal forms of (FST M), (SND M) and (SND (SND M)):
+
+   Note: PAIR is traditionally called CONS, FST is CAR and SND is CDR.
+
+   First, M reduces to
+   lambda c.(c a (PAIR b c)), thus (FST M) -> (M T) =
+   (lambda c.(c a (PAIR b c))) T -> (T a (PAIR b c)) = 
+   (lambda x.lambda y.x) a (PAIR b c) --> a  (generally, KAB -> A)
+
+   (SND M) -> (M F) =    (lambda c.(c a (PAIR b c))) F ->
+   (F a (PAIR b c)) = (lambda x.lambda y.y) a (PAIR b c) --> (PAIR b c)
+   (generallym KIAB->B), 
+   (PAIR b c) -> lambda d.(d b c)  : note alpha conversion needed here
+   
+   (SND (SND M)) -> (SND M) F -> (M F) F = M F F.
+   from above, we have that M is (after alpha conversion) 
+   lambda v.v a (lambda d. d b c), so
+   M F F --> (F a (lambda d. d b c)) F -> 
+   (lambda d. d b c) F -> (F b c) -> c   (F=KI, and KIAB=B)
+   
+9. (challenge) ISZERO = lambda m. m (lambda x.FALSE) TRUE
+Observe:
+
+ISZERO ZERO = ISZERO FALSE -> FALSE (lambda x.FALSE) TRUE -> TRUE (KIAB=B)
+ISZERO TWO --> (let G = lambda x.FALSE):
+             TWO G TRUE --> G (G TRUE)  --> FALSE
+
+10. (not recommended)  find the normal form of
+
+(lambda x. x x) (lambda x. x x)
+
+... still working on it ...   :)
+

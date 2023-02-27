@@ -1,0 +1,113 @@
+			Lambda Calculus Homework 1
+			
+	              Due one week from time assigned
+
+    **Deadline is FIRM as sample solutions will be available afterwards**
+
+  Write your solutions clearly by hand and submit scans (in pdf) or
+  clear photos of your solutions, or submit hard copy at end of class.
+
+
+0. Identify the free and bound variables in the following term:
+
+   lambda u. lambda x. [y (lambda y.x y) u y]
+
+ Remember: whether a term is free or bound is always relative to a given
+ term.  What are the free and bound variables for just the term inside the
+ []'s ?
+
+
+1. Determine if the following pairs of terms are alpha-equivalent.
+
+   a.  lambda x.lambda y. (x y x)  and
+       lambda x.lambda y. (y x y)
+
+   b.  lambda x. lambda y. x (lambda y.x) y   and 
+       lambda a. lambda b. a (lambda u.a) b
+
+For the rest of the problems, find the beta-normal forms of the
+following terms.  Remember: you can rename bound variables to
+avoid possible clash, but never free variables.  Also, application
+associates to the left: a b c is the same as (a b) c, but not the
+same as a (b c).  Also, do not confuse lambda x.x y with (lambda x.x) y:
+application has precedence over abstraction.
+
+2. (lambda x.lambda y. (y x)) u (lambda x.x)
+
+3. given S, K, I as they are in the handout, find the normal forms
+   of KII, SIK, SK(KI), and S(KI).  Application associates to the left, 
+   and the order is important.  Also remember that application binds 
+   tighter than lambda-abstraction, so (lambda x.x y) is NOT the same
+   as (lambda x.x) y.
+
+4. given A = lambda m.lambda n.lambda f.lambda x. m f (n f x),
+         T = lambda m.lambda n.lambda f.lambda x. m (n f) x
+	 Zero = lambda f.lambda x.x
+         One = lambda f.lambda x.(f x)
+         Two = lambda f.lambda x.f (f x)
+
+   Find the normal form of (A Two One).
+   Then find the normal form of (T Zero Two)
+   What do A and T stand for?
+
+4b. (NEW - OPTIONAL CHALLENGE)
+   Church exponentiation, m to the nth power, is lambda m.lambda n.(n m).
+   Show that 3 to 2rd power = 9 using the Church representation.
+
+
+5. Given T = lambda x. lambda y. x      (same as K)
+         F = lambda x. lambda y. y      (same as KI)
+         D = lambda p.lambda q. (p T q)   (where F is as above)
+    
+   Find the normal forms of:
+      
+      a. (D F F)
+      b. (D F T)
+      c. (D T F)
+      d. (D T T)
+
+Does anything about the behavior of these lambda terms look familiar? 
+
+(pretend you're all excited now and want to know more!)
+
+
+6. Let T and F be as they were in the above problem, and let
+   N = lambda x. (x F T)
+
+   what are the normal forms of 
+
+      a. (N F)
+      b. (N T)
+      c. (N (N T))
+
+ ( he he he ... )
+
+7. Let T and F be as above and let IF = lambda c.lambda a.lambda b.(c a b).
+   Find the normal forms of
+
+   (IF T A B)
+
+   (IF F A B)
+
+   For arbitrary terms A, B (what A and B are shouldn't be important).
+
+
+8. let PAIR = lambda a. lambda b. lambda c. (c a b)
+   let FST = lambda p. p T   (where T is as above)
+   let SND = lambda p. p F
+   let M = (PAIR a (PAIR b c))
+   Find the normal forms of (FST M), (SND M) and (SND (SND M))
+
+
+9. (challenge).  Design a pure lambda term ISZERO that determines if
+a church numeral is zero, that is:
+
+   ISZERO ZERO  should beta-reduce to TRUE (K), but for non-zero values:
+   ISZERO (lambda f.lambda x.f (f x))  should beta-reduce to FALSE.
+
+Show that these reductions indeed hold for your ISZERO.
+
+
+10. (not recommended unless you have a lot of time..) find the normal form of
+
+(lambda x. x x) (lambda x. x x)
