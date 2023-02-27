@@ -297,11 +297,12 @@ list doubleupT(list m){
   list doubleup(list m, list stack){
     if( m == NIL) return stack;
     else{
-      return doubleup(cons(car(m), cons(car(m), cdr(m))) );
+      return doubleup(cons(car(m), cons(car(m), cdr(m))), NIL );
     }
   }
   return doubleup(m,NIL);
 }
+printf("%d %d", car(doubleupT(m)), car(cdr(doubleupT(m))));
 /*
 //2 
 typedef void (*actionon)(int);
