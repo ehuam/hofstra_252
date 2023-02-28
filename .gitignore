@@ -5,8 +5,8 @@
 **/a.out
 
 # Ignore folders that are created by dotnet
-**/obj/
-**/bin/
+#**/obj/
+#**/bin/
 
 # ignore files created by emacs
 [#]*[#]
