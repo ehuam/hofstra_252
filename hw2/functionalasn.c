@@ -335,19 +335,58 @@ list filter (predicate p, list m){
 
    hint: for the tail-recursive function the intersection to be built (mn)
    should be an extra argument.
+*/
 
+list intersection ( list a, list b){
+
+  list iIntersection(list m, list n, list mn){
+    if(m==NIL) return mn;
+    else if (n== NIL) return mn;
+    else if(car(m)==car(n)) return iIntersection(cdr(m), cdr(n), cons(car(m), mn));
+    else return iIntersection(cdr(m), cdr(n), mn);
+  }
+  return iIntersection(a, b, NIL);
+}
+
+/*
 7. write a function 'sublist' so that sublist(m,n) returns true if every
    value in m is also found in n (ordering and duplicates don't matter),
    and returns false othewise.  
 */
-/*
-//7
-list sublist(list m, list n){
-// return true if every value in m is also found in n
-// false otherwise
 
-return forall(car(m) == car(n), )
-}*/
+//7 
+/*
+BOOL subList( list a, list b){
+  if (a == NIL && b == NIL) return 1; // two empty sets
+  if (b == NIL) return 1; // empty list is a subset of all sets
+
+  list remove_dupe(list c, list stack){
+    int curr = car(c);
+    if (c == NIL) return stack;
+    else if(curr != car(c)){
+      return cons(curr, stack);
+    }
+    else return remove_dupe(cdr(c), stack); 
+  }
+  list seta = remove_dupe(a, NIL);
+  list setb = remove_dupe(b, NIL);
+
+  fun equalTo (int x){
+
+  }
+
+  list reset = b;
+  BOOL iSubList (list m, list n, BOOL currentState){
+    if(m != NIL && n ==NIL) return 0;
+    else if (car(m) == car(n)){
+      return iSubList(cdr(m), 
+                      filter(!car(m), n), 1);
+    } 
+    else if (car(m) != car(n)) return iSubList(m, cdr(n), 1);
+    else return iSubList(m, cdr(reset), 1);
+  }
+  return iSubList(a, b, 0); // initial value to false;
+} */
 
 
 /*
@@ -383,7 +422,22 @@ int fold(list m, binop op)
    if (cdr(m)==NIL) return car(m); else return op(car(m),fold(cdr(m),op));
 }
 fold(m,subtract) will return 5-(3-2) = 4.
+*/
 
+int subtract(int a, int b) { return a-b; }
+
+
+int right_reduce(list m, binop op){
+  int iRR(list m, int result){
+    if(cdr(m) != NIL){
+      return iRR(cdr(m), op( car(cdr(m)), result));
+    }
+    else return result;
+  }
+  return iRR(reverse(m), car(reverse(m)));
+}
+
+/*
 Submit all problems with main in one file.
 */
 
@@ -391,6 +445,7 @@ int main()
 {
   list m = cons(2,cons(3,cons(5,cons(7,cons(11,NIL)))));
   // ... demonstrate all your functions ...
+
 
 printf("Printing M:");
 printE(m);
@@ -401,5 +456,28 @@ printf("\n#4, Printing how many even numbers are in M : %d\t", howmany(isEven, m
 printf("\n#5, Printing only even numbers:\t");
 printE(filter(isEven, m));
 
+list a = cons(2,cons(4,cons(6,NIL)));
+list b = cons(2,cons(5,cons(6,cons(8,NIL))));
+list ab = intersection(a,b); // should return list cons(2,cons(6,NIL)) 
+printf("\n#6 Printing intersection(ab):\t");
+printE(ab);
+
+/*
+list f = cons(2,cons(4,cons(6,NIL)));
+list g = cons(2,cons(6,cons(4,cons(6,NIL))));
+printf("\n #7f is subset of g is True, right? %d", subList(f,g));
+*/
+
+list x = cons(5,cons(3,cons(2,NIL)));
+printf("\n#8 applying binop '-' right reduction to list x = %d", right_reduce(x, subtract));
+ 
+  //printf("car(cdr(x) = %d", car(cdr(x)));
+  printf("\nPrinting X: ");
+  printE(x);
+  /*printf("\ncddr(x) is: \t");
+  printE(cddr(x));
+  printf("\ncdr(cddr(x)) is: \t");
+  printE(cdr(cddr(x)));
+  */
   return 0;
 }//main
