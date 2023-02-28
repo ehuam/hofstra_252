@@ -1,0 +1,235 @@
+; more interesting scheme code:
+(set! load-noisily? #t)
+
+; data structures derived from lambda calc. directly
+
+; a tuple, can be used for linked lists as well as other structs
+(define newcell (lambda (x y) 
+  (lambda (s) (if (= s 1) x y))))
+
+(define head (lambda (cell) (cell 1)))
+(define tail (lambda (cell) (cell 2)))
+
+(define odd (newcell 1 (newcell 3 (newcell 5 (newcell 7 '())))))
+
+;  built-in scheme operators:
+;  newcell 'cons'
+;  head    'car'
+;  tail    'cdr'
+
+; non-tail recursive length function
+(define len (lambda (l)
+   (if (equal? l '()) 0
+       (+ 1 (len (tail l))))))
+
+; tail recursive version (recursive call is last expression before exit)
+; always call with (len2 odd 0)
+(define len2 (lambda (l ax)
+  ( if (equal? l '()) ax
+       (len2 (tail l) (+ ax 1)))))
+
+; C++ version, assuming cell is a class with tail() and head() methods:
+;  int len2(cell * l, int ax)
+;   { if (l == NULL) return ax;
+;       else return len2(l->tail(), ax+1);
+;   }
+
+;  loop version just another form of tail-recursion
+;  cell * current;
+;  while (current ! = NULL)
+;   { ax = ax+1;
+;     current = current->tail;
+;   }
+;  for(cell * i=l;i!=NULL;i=i->tail) ax++;
+
+; length function defined on built-in lists:
+
+(define len3 (lambda (l)
+  (if (null? l) 0 (+ 1 (len3 (cdr l))))))
+; doesn't look all that different, does it?!
+
+; function to return the nth element of list l, 0th is first.
+; return '() if n is too large:
+(define nth (lambda (l n)
+  (if (null? l) '()
+    (if (< n 1) (car l)   ; note this is an "else if" expression
+      (nth (cdr l) (- n 1))))))
+
+; alternative using cond expressions, and implicit lambda
+(define (nth2 l n)
+  (cond ((null? l) '())
+	((< n 1) (car l))
+	(#t (nth (cdr l) (- n 1)))))
+
+;(nth '(a b c d e f) 3)  -->  d
+; is the above function tail-recursive?
+
+; finds largest element L, tail-recursive version
+(define (largest L ax)
+  (if (null? L)  ; (equal? L '())
+      ax
+      (if (< ax (car L)) (largest (cdr L) (car L))
+	  (largest (cdr L) ax))))
+
+; version using cond instead of if
+(define (largest L ax)
+  (cond ((null? L)  ax)
+        ((< ax (car L)) (largest (cdr L) (car L)))
+        (#t (largest (cdr L) ax))))
+
+; non-tail recursive version:
+(define (max L) 
+   (cond ((null? L) 'error)
+	 ((null? (cdr L)) (car L))
+	 ((> (car L) (cadr L)) (max (cons (car L) (cddr L))))
+	 (#t (max (cdr L)))))
+
+
+(set! load-noisily? #t)  ; helps for debugging
+
+;------------------ operations on lists 
+
+;'(a b b c) -> '(a b c)
+(define (remdups m) ; remove duplicates (all constructive)
+  (if (null? m) m
+      (if (member (car m) (cdr m)) (remdups (cdr m))
+	  (cons (car m) (remdups (cdr m))))))
+
+; tail recursive version
+(define (removeduplicates m)
+  (define (iter m ax)
+    (cond ((null? m) ax)
+	  ((member (car m) (cdr m)) (iter (cdr m) ax))
+	  (#t (iterm (cdr m) (cons (car m) ax)))))
+  (iter m ()))
+
+; reversing a list, non-tail recursive
+(define (rev1 m)
+  (if (null? m) m (append (rev1 (cdr m)) (list (car m))))); very inefficient
+(define (rev m)
+  (define (iter m stack)
+    (if (null? m) stack) (iter (cdr m) (cons (car m) stack)))
+  (iter m ())) ; much better
+
+; higher-order functions take functions are arguments
+; tail-recursive map: (map (lambda (x) (* x x)) '(1 2 3 4)) --> (1 4 9 16)
+(define (mapfun f m)
+  (define (iter m ax)
+    (if (null? m) ax (iter (cdr m) (cons (f (car m)) ax))))
+  (rev (iter m ()))) ; rev called so values correspond to original order
+
+
+; reduce - applies a binary function with unit to a list
+; (reduce (lambda (x y) (+ x y)) 0 '(2 3 5 7))  --> 17
+(define (reduce op unit m)
+  (cond ((null? m) unit)
+	((null? (cdr m)) (car m))
+	(#t (reduce op unit (cons (op (car m) (cadr m)) (cddr m))))))
+
+(define (exists p m) ; find (p x) true for some x in m:
+  (if (null? m) #f
+      (if (p (car m)) #t
+	  (exists p (cdr m)))))
+
+(define (exists p m) ; find (p x) true for some x in m:
+  (and (not (null? m)) (or (p (car m)) (exists p (cdr m))))); tail recursive?
+
+(define (forall p m)
+  (not (exists (lambda (x) (not (p x))) m)))
+
+
+(define (println x) (begin (display x) (display "\n")))
+
+(println "")
+(println (reduce (lambda (x y) (+ x y)) 0 '(2 3 5 7)))
+
+(define (isprime n)  ; is n a prime number
+  (define (check c)
+    (or (> c (+ 1 (sqrt n))) (and (> (remainder n c) 0) (check (+ c 2)))))
+  (if (= n 2) #t
+      (if (or (< n 2) (= (remainder n 2) 0)) #f
+	  (check 3))))
+(println (isprime 17))
+(println (isprime 25))
+(println (exists isprime '(4 9 12 15 21 25)))  
+(println (forall isprime '(2 3 5 7 11 13 17 19)))
+
+
+
+
+; binary search trees
+
+;  ---------   Binary Trees  ---------
+
+; choosing a representation:
+; we could use built-in lists, for example,
+; '(3 (4 () ()) (5 () ())) can represent a tree with 3 at the root and
+; subtrees with data 4 and 5 on the left and right respectively, which
+; in turn have empty subtrees.  Another way to have trees (or more 
+; complex structures in general, is to do it with lambda encapsulation
+; like we did above with "newcell", "head, and  "tail":
+
+; node takes a datum, and left and right branches to make a tree:
+; '() is again the empty tree (null)
+(define node (lambda (x l r) 
+    (lambda (s)
+       (if (equal? s 'right) r
+          (if (equal? s 'left) l x)))))
+
+; convenient data accessors:
+
+(define data (lambda (tree) (tree 'data)))
+(define left (lambda (tree) (tree 'left)))
+(define right (lambda (tree) (tree 'right)))
+
+; computes number of nodes in the tree - try this 
+; without recursion, even without tail-recursion!  
+(define size (lambda (tree)
+   (if (null? tree) 0
+       (+ 1 (size (tree 'left)) (size (tree 'right))))))
+
+; length of longest branch of tree
+(define depth (lambda (tree)
+   (if (null? tree) 0
+       (let ((ldepth (depth (left tree))) 
+	     (rdepth (depth (right tree))))
+	 (+ 1 (if (> ldepth rdepth) ldepth rdepth))))))
+; note that "if" expressions return a value, which we can then add 1 to
+
+; determines if element x is present in the tree: - look ma, no if-else!
+(define intree (lambda (x tree)
+   (and (not (null? tree))
+	    (or (equal? x (data tree))
+		(intree x (left tree))
+		(intree x (right tree))))))
+
+(define mytree (node 6 (node 3 '() '()) (node 8 '() '())))
+(define biggertree (node 9 mytree mytree))
+
+((mytree 'left) 'data)   ; gives 3
+(data (left mytree))     ; also gives 3
+
+
+; prints tree elements in preorder traversal:
+; here I introduce the begin construct:
+; (begin A B) is the same as (labmda (x) B) A  - by virtue of 
+; call by value, A is evaled first, then B. x is a dummy parameter
+
+(define (preorder tree)
+  (if (not (null? tree))
+    (begin
+      (display (data tree))
+      (display " ")
+      (preorder (left tree))
+      (preorder (right tree))
+    )
+  )
+)
+
+(preorder biggertree)
+
+; class excercise:  write function "smallest" that returns the
+; smallest value stored in a tree - assume all values are non-negative
+; integers and the empty tree has smallest value zero.
+
+
