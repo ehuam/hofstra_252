@@ -191,7 +191,7 @@ list doubleupT(list m){
       return doubleup(cdr(m), cons(car(m), cons(car(m), stack)));
     }
   }
-  return doubleup(m,NIL);
+  return reverse(doubleup(m,NIL));
 }
 
 /*
@@ -218,7 +218,6 @@ list doubleupT(list m){
    */
 
   //2 
-typedef void (*actionon)(int);
 
 void output(int x) 
 {
@@ -241,8 +240,8 @@ void foreach(list m, actionon f){
 */
 //3
 void printE(list m){
-  return foreach(m, output);
   printf("\n");
+  return foreach(m, output);
 }
 /*
 
@@ -266,11 +265,37 @@ void printE(list m){
    challenge: write the function in both C and Scheme
    */
   //4
-BOOL isNegative(int x) { return x < 0 ;}
+BOOL tester(BOOL p) { 
+  BOOL t = 3 < 5;
+  BOOL f = 3 > 5;
+  if(t){
+    printf("\n Printing True %d\n", t);
+  }
+  if(!f){
+    printf("\n Printing False %d\n", f);
+  }
+}
+
+BOOL isNegative(int x) { 
+  if (x<0) return 1;
+  return NIL; 
+}
+
+BOOL isEven(int x) { 
+  if (x%2 == 0) return 1;
+  return NIL; 
+}
+
 
 int howmany(predicate p, list m){
-  return foreach(m, predicate p);
-
+  
+  int thowmany(predicate p, list m, int ax){
+    if(m == NIL) return ax;
+    else if(p(car(m))) // if p(m) is true
+      return thowmany(p, cdr(m), ax+1);
+    else return thowmany(p, cdr(m), ax);
+  }
+  return thowmany(p,m,0);
 }
 
 /*
@@ -285,14 +310,18 @@ int howmany(predicate p, list m){
    the order in the filtered list is not important.
    */
 
-  //5
-  /*
+//5
 list filter (predicate p, list m){
-  if(m == NIL) return cons(NIL, list);
-  list filtered = return foreach(m, filter);
-  return filtered;
-}
-*/
+
+  list tfilter(predicate p, list m, list stack){
+    if(m == NIL) return stack; 
+    else if(p(car(m)) ){ // if p(m) is true
+      return tfilter(p, cdr(m), cons(car(m), stack));
+    }
+    else return tfilter(p, cdr(m), stack);
+    }
+  return tfilter(p, m, NIL);
+  }
 
 /*
  
@@ -363,12 +392,14 @@ int main()
   list m = cons(2,cons(3,cons(5,cons(7,cons(11,NIL)))));
   // ... demonstrate all your functions ...
 
+printf("Printing M:");
 printE(m);
 
 printE(doubleupT(m));
 
-
-
+printf("\n#4, Printing how many even numbers are in M : %d\t", howmany(isEven, m));
+printf("\n#5, Printing only even numbers:\t");
+printE(filter(isEven, m));
 
   return 0;
 }//main
