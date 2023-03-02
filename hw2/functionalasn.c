@@ -174,7 +174,27 @@ RECREATE THIS FUNCTION IN C, RESPECTING THE STRUCTURE OF THIS PROGRAM.
 1b. Write a tail-recursive version of the doubleup function: wrap the tail
    recursive function inside an outer function.  You may also want to copy
    over the reverse function from above.
+*/
+list doubleup(list m)
+  {
+    if (m == NIL) { return m;}
+    list newlist = cons ( car(m), cons ( car (m), 
+                          doubleup(cdr(m))  ));
+    return newlist;
+  }
 
+list doubleupT(list m){
+  if (m == NIL) return m;
+  list doubleup(list m, list stack){
+    if( m == NIL) return stack;
+    else{
+      return doubleup(cdr(m), cons(car(m), cons(car(m), stack)));
+    }
+  }
+  return reverse(doubleup(m,NIL));
+}
+
+/*
 2. define a new type:
    typedef void (*actionon)(int);
 
@@ -195,10 +215,35 @@ RECREATE THIS FUNCTION IN C, RESPECTING THE STRUCTURE OF THIS PROGRAM.
    void foreach(list m, actionon f);
    or
    void foreach(list m, void (*f)(int));  // without typedef
+   */
+
+  //2 
+
+void output(int x) 
+{
+  printf("%d ", x);
+}
+
+void foreach(list m, actionon f){
+  if( m == NIL) return output(NIL);
+  else{
+    f(car(m));
+    return foreach(cdr(m), f);
+  }
+  
+}
+/*
 
 3. Write a function to print every value in a list using the foreach loop
    you created above for problem 2.  If you're not sure of the above, write a
    tail recursive function from scratch first.
+*/
+//3
+void printE(list m){
+  printf("\n");
+  return foreach(m, output);
+}
+/*
 
 4. write a higher-order function 'howmany' that takes a predicate
    as an argument and returns how many values in a list satisfy the
@@ -218,7 +263,42 @@ RECREATE THIS FUNCTION IN C, RESPECTING THE STRUCTURE OF THIS PROGRAM.
    passed in as an extra argument.
 
    challenge: write the function in both C and Scheme
+   */
+  //4
+BOOL tester(BOOL p) { 
+  BOOL t = 3 < 5;
+  BOOL f = 3 > 5;
+  if(t){
+    printf("\n Printing True %d\n", t);
+  }
+  if(!f){
+    printf("\n Printing False %d\n", f);
+  }
+}
 
+BOOL isNegative(int x) { 
+  if (x<0) return 1;
+  return NIL; 
+}
+
+BOOL isEven(int x) { 
+  if (x%2 == 0) return 1;
+  return NIL; 
+}
+
+
+int howmany(predicate p, list m){
+  
+  int thowmany(predicate p, list m, int ax){
+    if(m == NIL) return ax;
+    else if(p(car(m))) // if p(m) is true
+      return thowmany(p, cdr(m), ax+1);
+    else return thowmany(p, cdr(m), ax);
+  }
+  return thowmany(p,m,0);
+}
+
+/*
 5. write a higher order function 'filter' that takes a predicate p and list
    m as an arguments and returns a list with just those values in m that
    satisfies the predicate.  For example, (in scheme syntax)
@@ -228,6 +308,22 @@ RECREATE THIS FUNCTION IN C, RESPECTING THE STRUCTURE OF THIS PROGRAM.
    should return a list '(-3 -1), which are the values in the original list
    that are negative.  You can also return '(-1 -3) (cons(-1,cons(-3,NIL))):
    the order in the filtered list is not important.
+   */
+
+//5
+list filter (predicate p, list m){
+
+  list tfilter(predicate p, list m, list stack){
+    if(m == NIL) return stack; 
+    else if(p(car(m)) ){ // if p(m) is true
+      return tfilter(p, cdr(m), cons(car(m), stack));
+    }
+    else return tfilter(p, cdr(m), stack);
+    }
+  return tfilter(p, m, NIL);
+  }
+
+/*
  
 6. write a function that takes two lists as arguments and returns their
    intersection: a list that contains all values found in both lists
@@ -239,10 +335,61 @@ RECREATE THIS FUNCTION IN C, RESPECTING THE STRUCTURE OF THIS PROGRAM.
 
    hint: for the tail-recursive function the intersection to be built (mn)
    should be an extra argument.
+*/
 
+list intersection ( list a, list b){
+
+  list iIntersection(list m, list n, list mn){
+    if(m==NIL) return mn;
+    else if (n== NIL) return mn;
+    else if(car(m)==car(n)) return iIntersection(cdr(m), cdr(n), cons(car(m), mn));
+    else return iIntersection(cdr(m), cdr(n), mn);
+  }
+  return iIntersection(a, b, NIL);
+}
+
+/*
 7. write a function 'sublist' so that sublist(m,n) returns true if every
    value in m is also found in n (ordering and duplicates don't matter),
    and returns false othewise.  
+*/
+
+//7 
+/*
+BOOL subList( list a, list b){
+  if (a == NIL && b == NIL) return 1; // two empty sets
+  if (b == NIL) return 1; // empty list is a subset of all sets
+
+  list remove_dupe(list c, list stack){
+    int curr = car(c);
+    if (c == NIL) return stack;
+    else if(curr != car(c)){
+      return cons(curr, stack);
+    }
+    else return remove_dupe(cdr(c), stack); 
+  }
+  list seta = remove_dupe(a, NIL);
+  list setb = remove_dupe(b, NIL);
+
+  fun equalTo (int x){
+
+  }
+
+  list reset = b;
+  BOOL iSubList (list m, list n, BOOL currentState){
+    if(m != NIL && n ==NIL) return 0;
+    else if (car(m) == car(n)){
+      return iSubList(cdr(m), 
+                      filter(!car(m), n), 1);
+    } 
+    else if (car(m) != car(n)) return iSubList(m, cdr(n), 1);
+    else return iSubList(m, cdr(reset), 1);
+  }
+  return iSubList(a, b, 0); // initial value to false;
+} */
+
+
+/*
 
 7b (challenge). Write the sublist function using only the forall and exists
    functions.  That is, do not write your own recursive function: use only calls 
@@ -275,7 +422,22 @@ int fold(list m, binop op)
    if (cdr(m)==NIL) return car(m); else return op(car(m),fold(cdr(m),op));
 }
 fold(m,subtract) will return 5-(3-2) = 4.
+*/
 
+int subtract(int a, int b) { return a-b; }
+
+
+int right_reduce(list m, binop op){
+  int iRR(list m, int result){
+    if(cdr(m) != NIL){
+      return iRR(cdr(m), op( car(cdr(m)), result));
+    }
+    else return result;
+  }
+  return iRR(reverse(m), car(reverse(m)));
+}
+
+/*
 Submit all problems with main in one file.
 */
 
@@ -284,74 +446,38 @@ int main()
   list m = cons(2,cons(3,cons(5,cons(7,cons(11,NIL)))));
   // ... demonstrate all your functions ...
 
-list doubleup(list m)
-  {
-    if (m == NIL) { return m;}
-    list newlist = cons ( car(m), cons ( car (m), 
-                          doubleup(cdr(m))  ));
-  }
-//printf("%d %d", car(doubleup(m)), car(cdr(doubleup(m))));
 
-list doubleupT(list m){
+printf("Printing M:");
+printE(m);
 
-  list doubleup(list m, list stack){
-    if( m == NIL) return stack;
-    else{
-      return doubleup(cons(car(m), cons(car(m), cdr(m))), NIL );
-    }
-  }
-  return doubleup(m,NIL);
-}
-printf("%d %d", car(doubleupT(m)), car(cdr(doubleupT(m))));
+printE(doubleupT(m));
+
+printf("\n#4, Printing how many even numbers are in M : %d\t", howmany(isEven, m));
+printf("\n#5, Printing only even numbers:\t");
+printE(filter(isEven, m));
+
+list a = cons(2,cons(4,cons(6,NIL)));
+list b = cons(2,cons(5,cons(6,cons(8,NIL))));
+list ab = intersection(a,b); // should return list cons(2,cons(6,NIL)) 
+printf("\n#6 Printing intersection(ab):\t");
+printE(ab);
+
 /*
-//2 
-typedef void (*actionon)(int);
-
-void output(int x) 
-{
-  printf("%d ", x);
-}
-
-void foreach(list m, actionon f){
-  if( m == NIL) return output(NIL);
-  else{
-    f(car(m));
-    return foreach(cdr(m), f);
-  }
-  
-}
-
-
-//3
-void printE(list m){
-  return foreach(m, output);
-}
-
-//4
-int howmany(predicate p, list m){
-  return foreach(m, predicate p);
-
-}
-
-//5
-list filter (predicate p, list m){
-  if(m == NIL) return cons(NIL, list);
-  list filtered = return foreach(m, filter);
-  return filtered;
-}
-
-//6 list intersection(list m, list n)
-
-//7
-list sublist(list m, list n){
-// return true if every value in m is also found in n
-// false otherwise
-
-return forall(car(m) == car(n), )
-
-}
+list f = cons(2,cons(4,cons(6,NIL)));
+list g = cons(2,cons(6,cons(4,cons(6,NIL))));
+printf("\n #7f is subset of g is True, right? %d", subList(f,g));
 */
 
-
+list x = cons(5,cons(3,cons(2,NIL)));
+printf("\n#8 applying binop '-' right reduction to list x = %d", right_reduce(x, subtract));
+ 
+  //printf("car(cdr(x) = %d", car(cdr(x)));
+  printf("\nPrinting X: ");
+  printE(x);
+  /*printf("\ncddr(x) is: \t");
+  printE(cddr(x));
+  printf("\ncdr(cddr(x)) is: \t");
+  printE(cdr(cddr(x)));
+  */
   return 0;
 }//main
