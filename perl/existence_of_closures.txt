@@ -1,0 +1,40 @@
+# perl - assume you've read the Perl tutorial
+
+# Two ways to define functions:
+
+sub println { print @_; print "\n"; }  # named function
+
+# pointers to functions
+my $f = sub {                          # unnamed lambda expression
+   my $x = $_[0];
+   $x * $x
+   };    #   f is lambda x.x*x
+
+# calling a named function:
+println (2,3,4);
+# calling a function pointer
+print $f->(5), "\n";
+println &$f(5);  # equivalent to $f->(5)
+
+
+# A closure is a function (lambda term) coupled with an "enviornment",
+# which is a set of values assigned to its free variables.
+# With pointers to functions, we can demonstrate the existence of
+# closures in Perl more closely.
+
+sub makeaccum  # returns a closure
+{
+    my $y = $_[0];
+    sub
+    { $y += $_[0]; $y}  #$y in this lambda is free, and forms the closure
+}
+my $a1 = makeaccum(0);
+my $a2 = makeaccum(0);
+println $a1->(2);
+println $a1->(2);
+println $a1->(2);
+println $a2->(2);
+# $a1 and $a2 are autonomous closures, each with its own copy of $y,
+# but sharing the same source code
+
+

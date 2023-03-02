@@ -1,0 +1,174 @@
+# Static and Dynamic Scoping in Perl (advanced example)
+
+# This file contains controversial ideas on how to use dynamic scoping,
+# first introduction of Aspect Oriented Programming concepts...
+
+# for convenience:
+sub println { print @_, "\n" }
+
+# Perl contains direct support of static and dynamic scoping
+my $a = 1;
+local $b = 10;
+
+sub g { $a + $b }
+
+{   # starts new scope
+    my $a = 2;      # statically scoped.
+    local $b = 20;  # dynamically scoped
+    println g();
+}
+
+
+# simulated dynamic scope: but dynamic scoping can be simulated anyway
+{
+    my $a0 = $a; # dynamic scoping tempoarily CHANGES a variable, usually global
+    $a = 2;      # this technique requires destructive assignment
+    println g();
+    $a = $a0;	 # restores original value, exits dynamic scope
+}
+
+# Why use static scoping normally?  It's possible to answer this question
+# in many ways.  The easiest way is that I want to know that my "local" 
+# variable $a0 won't interfere with some function in some unexpected way.
+# To be absolutely sure I would have to look at the source code of all
+# functions as well as the code for all functions called by these functions...
+# That's hardly the behavior I want out of "local" variables.
+# In terms of lambda calculus, the free variables of a function are statically
+# scoped.  If you accept the reasons for lambda calculus scoping rules, then
+# you must accept static scoping over dynamic scoping.
+
+
+#######  When is dynamic scoping useful?
+#1. temporarily replace the value of a global - stdout is already global.
+
+#2. (subversive!) inject new behaviors into existing functions.
+#  like WHEN I WANT TO INTERFERE WITH OTHER PEOPLE'S CODE. But that
+#  could be for a legitimate purpose: I want to give them ADVICE:
+
+local $gcd; # need to declare first if recursive
+$gcd = sub {
+    my ($a,$b) = ($_[0],$_[1]);
+    if ($a==0) {$b} else {$gcd->($b%$a,$a)}
+};
+println $gcd->(12,8);  # problem: gcd is not defined for 0,0
+
+$fact = sub            # factorial is undefined for negative integers
+{   my $n = $_[0];
+    my $ax = 1;
+    while ($n>1) {$ax =$ax*$n--}
+    $ax;
+};
+
+# Note that $fact and $gcd are two GLOBAL VARIABLES
+
+### temporarily inject tracing behavior into some functions
+$advice_tracecall = sub  # takes ($function,$args) as parameter
+{
+    my ($f,@params) = @_;  # f is itself a function, the "target" program
+
+    my $basegcd = $gcd;
+    my $call_level = 0;
+    local $gcd = sub
+    {   $call_level++;  # distinguish between top-level and recursive calls
+	if ($call_level==1)  # don't trace recursive calls
+	  { println("gcd being called on ", join(",",@_)); }
+	$basegcd->(@_);
+	$call_level--;
+    };
+    my $basefact = $fact;
+    local $fact = sub
+    {
+	println("fact being called on ", join(",",@_));
+	$basefact->(@_);
+    };
+
+    $f->(@params);  # run target program under advice
+    # cross-cutting advice
+}; # tracecall advice.
+
+# The advice CROSSCUT multiple functions.
+# What's the difference between the above and just writing new versions
+# of gcd and fact?  Because that won't affect existing code, which are
+# still calling the original functions.  You want to CHANGE the behavior of
+# the existing functions, but do so "locally".  This way of writing code
+# was inspired by Aspect Oriented Programming.
+
+# Advice to do output after calling
+$advice_output = sub {
+    my ($f,@params) = @_;    
+    my $basegcd = $gcd;
+    local $gcd = sub
+    {   
+	my $x = $basegcd->(@_);
+	if ($_[0]==0) {println "gcd is ",$x}  
+	$x;
+    };
+    my $basefact = $fact;
+    local $fact = sub
+    {
+	my $x = $basefact->(@_);
+	println("factorial is ",$x);
+	$x;
+    };
+
+    $f->(@params);  # run target program under advice
+};
+
+# For those concerned with security: suppose there are functions with
+# vulnerabilities, such as not checking if parameters are within valid
+# range, and that these functions are already being used by software.
+# Writing a new function would require you to change all code so that
+# the new function is called instead of the old one, but you might not
+# even have access to other source code.  Again, you want to CHANGE
+# the behavior of the function so whoever calls it will get the
+# benefit of your sagely advice:
+
+$advice_checkparams = sub {
+    my ($f,@params) = @_;    
+    my $basegcd = $gcd;
+    local $gcd = sub
+    {   
+	if ($#_<1  || ($_[0]==0 && $_[1]==0))
+	{println "bad args @_ passed to gcd"}
+	else {$basegcd->(@_)}
+    };
+    my $basefact = $fact;
+    local $fact = sub
+    {
+	if ($#_<0 || $_[0]<0)
+    	{println "bad args @_ passed to fact"}
+	else {$basefact->(@_);}
+    };
+
+    $f->(@params);  # run target program under advice    
+};
+
+$main = sub   # there's no main in perl, so this is just some function.
+{
+    $gcd->(30,20);
+    $fact->(5);
+    $gcd->(2); # not enough parameters!
+    $gcd->(0,0); # should be undefined
+    $fact->(-2);  # not defined.
+};
+
+println("--------------");
+$main->();  # nothing happens
+println("--------------");
+
+&{$advice_tracecall}($main); # same as $advice_tracecall->($main)
+println("--------------");
+
+$advice_output->($main);  # run main under different advice
+println("--------------");
+
+# WEAVE two advice together:
+$advice_output->($advice_tracecall,$main);  # run under multiple advice
+# The first advice (output) gets to make modifications first, so
+# The second advice gets to override those changes, and thus have precedence.
+println("--------------");
+
+$advice_output->($advice_tracecall,$advice_checkparams,$main);
+
+println("--------------");
+$advice_output->($advice_checkparams,$advice_tracecall,$main);

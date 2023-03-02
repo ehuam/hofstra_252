@@ -1,0 +1,116 @@
+# Modeling inheritance with closures in perl.
+
+# In this version I will use a hash table to help create the public interface.
+# but the public interface is still a function.  It's not possible to use
+# a hash table itself and distinguish between public and protected values.
+
+# One of the aims of this program is to show how proper inheritance
+# and polymorphism can be achieved using closures to represent objects.
+# The mechanism that's implemented here is
+#   1. NOT DYNAMIC SCOPING, and
+#   2. NOT DYNAMIC DISPATCH EITHER
+# We allow the "subclass" to override the superclass method by explicitly
+# changing the superclass pointer to point to a new method (new closure).  
+# The original method is lost.  But this is one way to achieve what we
+# want.
+
+# First, an experiment: can we have closures with dynamic scoping?
+sub makeaccum {
+    local $x = 0;
+    sub { $x+=$_[0]; $x}
+}
+$a1 = makeaccum();
+$a2 = makeaccum();
+
+print $a1->(2), "\n";   # 2
+print $a1->(2), "\n";   # 4
+print $a2->(2), "\n";   # 6  -- oops!
+# Cannot create proper closures with dynamic scoping!
+# local bindings (dynamic bindings) are made using a separate, GLOBAL
+# stack.  Every a new local var is declared, it's pushed on the global
+# stack.  Thus a "local" var has more of the characteristics of a global
+# variable.  Both closures, $a1 and $a2, will find the same local $x$
+# on top of the stack.
+
+# So closure objects relies on static scoping (my).  But does "dynamic
+# dispatch" use dynamic scoping.  NO.  Dynamic dispatch uses a different
+# mechanism to determine at runtime which function to call.  It should
+# not be confused with using dynamic scoping for functions.
+
+
+###############
+sub team    # constructs a team that can win and lose
+{
+    my ($wins,$losses) = (0,0);
+    my $win = sub { $wins++ };
+    my $lose = sub { $losses++ };
+    my $wp = sub { # calculate winning percentage
+	my $total = $wins+$losses;
+	if ($total>0) {$wins*1.0/$total} else {0.0}
+    };   # end of assignment to $wp
+
+    my $betterthan = sub {  # compare winning percentages
+	$wp->() > $_[0]->("wp")->()
+    };
+
+    my $hash;  # hash interface will be a hashtable of pointers
+    $hash->{"win"} = $win;
+    $hash->{"lose"} = $lose;
+    $hash->{"wp"} = $wp;
+    $hash->{"betterthan"} = $betterthan;
+    my $public = sub { $hash->{$_[0]} };
+
+    # make possible to override $wp function from "subclass"
+    my $overridewp = sub { $wp = $_[0]; };
+
+    # make visible to subclass pointers to $wins, $losses
+    my $protected = sub { # subclass interface will be interface method
+	my $req = $_[0];
+	if ($req eq "wins") {return $wins;}
+	if ($req eq "losses") { return $losses; }
+	if ($req eq "overridewp") { return $overridewp; }
+	else {return $public->($req);}
+    };
+
+    # use parameter of team to determine what kind of interface to return
+    if ($_[0] eq "inherit")  {$protected}
+    else {$public} # returns public interface table by default (if no param)
+}#team
+
+$mets = team();
+$yankees = team();
+
+$mets->("win")->();    # why extra ->() ?
+$yankees->("lose")->();
+print $mets->("betterthan")->($yankees), "\n";
+
+### teams that can tie
+sub tteam
+{
+    my $ties = 0;
+    my $tie = sub { $ties++ };
+    my $super = team("inherit");   # every tteam is a team
+    my $wp = sub
+    {
+	my $wins = $super->("wins");
+	my $losses =$super->("losses");
+	my $total = $wins+$losses+$ties;
+	if ($total>0) {($wins+0.5*$ties)/$total} else {0.0}
+    };   # end of assignment to $wp
+    $super->("overridewp")->($wp);
+
+    # interface will be function
+    sub {
+	my $req = $_[0];
+	if ($req eq "tie") {return $tie}
+	else {return $super->($req)}
+    }
+}#tteam
+
+$jets = tteam();
+$giants = tteam();
+
+$jets->("lose")->();
+$giants->("lose")->();
+$jets->("tie")->();
+print $jets->("betterthan")->($giants), "\n"; #prints 1 since wp overriden

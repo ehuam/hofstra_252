@@ -1,0 +1,207 @@
+#!/bin/perl
+
+# Perl meets lambda calculus
+# Chuck Liang, for CSC123/252, Hofstra University Computer Science,
+
+# If you're an experienced programmer, learning enough about perl to 
+# understand this document should be a day or two's work, maybe less.  
+# I've some tutorial links to help you.  Focus on how functions 
+# (subroutines) are defined in perl.
+# To run this program, chmod +x filename, or type perl filename.
+
+# S K and I combinators:
+
+sub I          # lambda x.x
+{  $_[0]; }
+# $_[0] is the first argument to subroutine I
+
+# one might be tempted to define K as simply sub{$_[0]} also, but
+# that's not correct since it really should return a lambda term if only
+# applied to one argument:
+sub K     # lambda x. lambda y. x
+{  my $x = $_[0];   # x records the first argument
+   sub { $x; }     # inner lambda term is what's returned
+}
+
+sub S  # lambda x.lambda y.lambda z.(x z) (y z)
+{
+    my $x = $_[0]; 
+   sub {
+         my $y = $_[0];
+         sub {
+	       my $z = $_[0];
+	       $x->($z)->($y->($z));
+	       #&{&$x($z)}(&$y($z));
+	     }
+       }
+}
+
+
+# testing to see if things works
+
+my $KI = K \&I;   # same as &K(\&I);
+# \&I is a pointer to function I - unfortunatet that this is not automated
+
+print (I whatever); print "\n";    # same as &I(whatever)
+
+print &K(3)->(4), "\n";
+# same as : print &{K 3}(4) , "\n";   # prints 3
+
+print $KI->(3)->(4), "\n";
+# print &{&$KI(3)}(4), "\n";  # prints 4
+
+my $SKI = S(\&K)->(\&I);   # same as &{&S(\&K)}(\&I)
+
+# SKI should reduce to I, so let's see if it does:
+print $SKI->(3), " ", $SKI->(ok), "\n";
+
+print "Now for booleans:\n";
+# Lambda booleans:
+# here, unlike K and $KI, I will cheat and assume that the
+# true and false combinators are always applied to 2 arguments.
+# this will allow me to write them more easily in perl, without
+# having to write functions that return functions.
+# Similarly, I will assume that IFELSE is always applied to 3 args.
+
+sub T { $_[0]; }
+sub F { $_[1]; }
+
+sub IFELSE0 { my $bool = $_[0]; 
+              &$bool($_[1],$_[2]); }
+
+# unfortunately, IFELSE0 above won't work because perl is call-by-value!
+# it'll evaluate the second argument $_[2] anyway (too bad!). 
+# However, we can fake call-by-name by making sure that 
+# IFELSE always gets a pair of subroutines.  These subroutines
+# are both vacuous.  That is, instead of 3, we use sub{3}!
+# then, to extract the value, we apply the sub returned by IFELSE0
+# to a dummy argument:
+
+sub IFELSE {  IFELSE0(@_)->(dummy) }
+
+print &IFELSE(\&T, sub{3}, sub{4}), "\n";   # prints 3
+print &IFELSE(\&F, sub{3}, sub{4}), "\n";   # prints 4
+
+# let's see if the call-by-name semantics of ifelse is captured:
+
+my $x = 3;
+
+#print &IFELSE0(\&T, "ok", 1/($x-3)), "\n";  # will crash
+
+print IFELSE(\&T, sub{"ok"}, sub{1/($x-3)}), "\n";  # will be "ok"!
+
+
+# This scheme works because most higher-order languages uses
+# something called "weak beta reduction" - which means they
+# will not normalize the body of a lambda term until the 
+# term is applied.
+
+# P.S. don't confuse call-by-name with call-by-reference.  In 
+# some ways call-by-reference is more similar to call-by-name than
+# call-by-value, but they are not the same, despite assertions by
+# some careless people.  If you pass a perl function a variable by
+# itself - as in &f(x), then x is passed by reference.  Weird huh?
+# In order to simulate call-by-name, you must pass a pointer to CODE,
+# not value - that's why we passed subroutines to IFESLE!
+
+
+#-------
+# lambda data structures: the word "cons" is borrowed from Lisp/Scheme.
+# I will use TRUE to select the first (head) item of the structure, and
+# FALSE to select the second (tail) item of the structure.
+
+# The idea here is that cons returns a function encapsulating
+# two values (head and tail).  The function takes a selector
+# (true or false, 1 or 2 doesn't matter) and returns the value
+# asked of it.  The function serves as an interface between the
+# internal data and outside access - similar to the principal of
+# object-oriented programming.  However, to have true objects,
+# we'll have to wait a bit longer.  Something new entirely is needed!
+
+sub CONS 
+{
+    my $head = $_[0];
+    my $tail = $_[1];
+    sub { &IFELSE($_[0], sub{$head}, sub{$tail}); }
+}
+
+# functions to extract items from CONS structure (traditional Lisp names)
+
+# car extracts the head:
+sub CAR 
+{ 
+    my $struct = $_[0];
+    $struct->(\&T);
+}
+
+# cdr extracts the tail:
+sub CDR 
+{ 
+    my $struct = $_[0];
+    $struct->(\&F);
+}
+
+my $primes = CONS (2,CONS (3,CONS (5,CONS (7,CONS (11,thatsenough)))));
+# same as &CONS(2,&CONS(3,...
+
+print "and the third prime number is: ", CAR (CDR (CDR $primes)), "!\n";
+
+
+# Perl's built-in recursion.
+sub factorial 
+{ my $n = $_[0];
+  if ($n<2) {1;} else {$n * &factorial($n-1);}
+}
+# print &factorial(6), "\n";
+
+
+# Applicative order Y-combinator
+# lambda M. (lambda x. M (lambda y. (x x y)))
+#           (lambda x. M (lambda y. (x x y)))
+
+sub Y
+{
+    my $M = $_[0];
+    my $N = 
+       sub {
+	     my $x = $_[0];
+	     $M->(sub{ $x->($x)->($_[0]) });
+	   };
+    $N->($N);
+}
+
+# new n-factorial
+
+my $fact =  Y sub{ my $f= $_[0];
+		   sub { my $n = $_[0];
+                   if ($n<2) {1;} else {$n * $f->($n-1);}
+
+		       }
+	       };
+
+print "6! is ", $fact->(6), "\n";
+
+print "---------------------\n\n";
+
+
+# ------------------------
+# EXTRA CREDIT for JAVA programmers: ***
+# in java you can inline a class that implements a generic interface,
+# as in 
+
+# new WindowAdapter() {
+#     public void windowClosing(WindowEvent e) {System.exit(0);} }
+
+# So in some ways it is possible to write a java function (method)
+# that returns a function.  How far can you take this idea?  Would
+# it be possible to use Java as we used Perl above?  Can you write
+# S, K and I?  IFELSE?  If not, what is it about Java that's stopping
+# you from doing it.
+
+# There's no due date on the extra credit - think about it now and
+# then during the semester.
+
+
+
+
+

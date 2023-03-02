@@ -1,0 +1,169 @@
+# What do we need for the most basic level of support for practical OOP?
+
+# We use "package", "ISA" and "bless"... We will still try to use
+# closures for the purpose of encapsulation.
+
+package Basicteam;
+
+sub newteam
+{
+    my ($wins,$losses) = (0,0);  # using closure concept for encapsulation
+    my $win = sub {$wins++};
+    my $lose = sub {$losses++};
+    my $getws = sub {$wins};  # accessor "methods" allow readonly access
+    my $getls = sub {$losses};
+
+    my $instance = {  # sets hash table/assoc. list
+	wins => $getws,   
+	losses => $getls,
+	win => $win,   
+	lose => $lose
+    };
+    bless $instance, "Basicteam";  # Thou art blessed...
+}   # bless also returns the blessed item ($instance hash)
+
+# "public" methods:
+sub percentage  # winning percentage
+{
+    my $self = shift;
+    my $wins = $self->{wins}->();  
+    my $games = $wins + $self->{losses}->();
+    #print "original percentage called\n";  # trace
+    if ($games==0) { return 0 }
+    else { return $wins*1.0/$games }
+}
+
+sub compare  # compare this team with other team by winning percentage
+{
+    my $myteam = shift;
+    my $yourteam = shift;
+    $myteam->percentage() - $yourteam->percentage()
+}
+sub record
+{
+    my $self = shift;
+    print $self->{wins}->(), " - ", $self->{losses}->();
+}
+sub play  #simulate game
+{
+    my $myteam = shift;
+    my $yourteam = shift;
+    my $diff = $myteam->compare($yourteam);
+    if ($diff>0.2) {$diff=0.2;}  #limit advantage due to better record
+    if ($diff<-0.2) {$diff=-0.2;}
+    if (rand() < 0.5+$diff) { 
+	$myteam->{win}->();  $yourteam->{lose}->();
+	print "I win, you suck\n";
+    }
+    else {
+	$myteam->{lose}->();  $yourteam->{win}->();
+	print "You win, but you still suck\n";
+    }
+}#play
+
+
+###
+my $yankees = newteam();
+my $mets = newteam();
+for(my $i=0;$i<162;$i++) {$mets->play($yankees);}
+print "Mets: "; $mets->record();
+print "\nYankees: "; $yankees->record(); print "\n";
+# note the difference between calling a closure function and package function
+
+##########################  "SUBCLASS"  #########################
+
+package Tieteam;
+@ISA = ("Basicteam");  # declares inheritance 
+
+sub newteam
+{
+    # create "superclass" instance:
+    my $basehash = Basicteam->newteam();
+    my $ties = 0;  # new instance variable
+    my $getts = sub { $ties };
+    my $tie = sub { $ties++ };
+    $basehash->{tie} = $tie;  # add closure methods to interface hash
+    $basehash->{ties} = $getts;
+    bless $basehash, "Tieteam";  # Miraculous relgious conversion!
+}
+
+#### can't "override" closure funs, but can override package methods
+
+sub percentage  # winning percentage
+{
+    my $self = shift;
+    my $wins = $self->{wins}->();
+    my $ties = $self->{ties}->();
+    my $games = $wins + $ties + $self->{losses}->();
+    #print "new version of percentage called\n";  # trace
+    if ($games==0) { return 0 }
+    else { return ($wins+$ties*0.5)/$games }
+}
+sub record
+{
+    my $self = shift;
+    print $self->{wins}->()," - ",$self->{losses}->()," - ",$self->{ties}->();
+}
+sub play  #simulate game
+{
+    my $myteam = shift;
+    my $yourteam = shift;
+    my $diff = $myteam->compare($yourteam); #diff in winning %
+    if ($diff>0.2) {$diff=0.2;}  #limit advantage due to better record
+    if ($diff<-0.2) {$diff=-0.2;}
+    my $rn = rand();
+    if ($rn>=0.47+$diff && $rn<0.53+$diff) {  # tie
+	$myteam->{tie}->();  $yourteam->{tie}->();
+	print "We both suck\n";	
+    }
+   if ($rn < 0.47+$diff) { 
+	$myteam->{win}->();  $yourteam->{lose}->();
+	print "I win, you suck\n";
+    }
+   if ($rn>=0.53+$diff) {
+	$myteam->{lose}->();  $yourteam->{win}->();
+	print "You win, but you still suck\n";
+    }
+}#play
+
+my $giants = newteam();
+my $jets = newteam();
+for(my $i=0;$i<16;$i++) {$jets->play($giants)}
+print "Jets: ",$jets->percentage(),"\t"; $jets->record(); 
+print "\nGiants: ",$giants->percentage(),"\t"; $giants->record(); print "\n";
+
+############### NOTES (READ!)
+
+# I could've also placed the wins and losses (and ties) variables inside
+# the hash table (association list) that represents the objects, but that
+# would mean that everything would be made "public".  I chose to combine the
+# built-in oop supported by packages with closures, so I can encapsulate these
+# instance variables inside objects, and control their access only through
+# select functions.  However, this also means that these functions (win/lose)
+# are not subject to overriding.
+
+# Now, what exactly is "bless"?  It's RUNTIME TYPE information that's attached
+# to the hash table, i.e. a tag that's visible at runtime that indicates if the
+# table represents a "Basicteam" or a "Tieteam".  Then when you call 
+# $jets->percentage(), it would call the correct version (overridden) version
+# of percentage.  That might not be surprising, and you might think that
+# it should figure out that it should call the version of percentage in its
+# own package anyway.
+
+# The subtlety to understand here is that a Tieteam also inherits the compare
+# function from the base Basicteam package.  However, the compare
+# function, when written, STATICALLY calls the version of percentage within
+# the Basicteam package, which did not count ties.  But when you call
+# $jets->compare($giants), the compare function calls the new version of
+# percentage. How does it know that it should do this?  Because of the
+# tag that's attached to the datastructure at RUNTIME with bless.  We add type
+# information to the "object" at runtime: this is called "DYNAMIC TYPE".
+
+# Uncomment the trace print statement inside the percentage functions and
+# see what happens:
+
+print "comparing: ", $jets->compare($giants), "\n";
+
+# Using dynamic type information to determine which version of a function to
+# call is called DYNAMIC DISPATCH.  And this is a fundamental feature of
+# OOP languages.

@@ -1,0 +1,81 @@
+;;;;;;;;;;;;;;; MERGESORT
+; 9/2017
+
+(define (println x) (begin (display x) (display "\n"))) ; for convenience
+
+(define (reverse m)  ; reverse a list, tail-recursive (actually built-in)
+   (define (irev s ax)
+      (if (null? s) ax (irev (cdr s) (cons (car s) ax))))
+  (irev m ()))
+
+(println (reverse '(1 2 3 4)))
+
+; split list into two equals parts (odd lengths will have longer right part).
+; uses two pointers to split list in one pass.
+; function returns a list of two lists
+(define (split M)
+  (define (collect M M2 ax) ; M2 advances twice as fast as M
+    (cond ((or (null? M2) (null? (cdr M2)))  (list ax M))
+	(#t (collect (cdr M) (cddr M2) (cons (car M) ax)))))
+  (collect M M ()))
+
+(println (split '(1 2 3 4 5)))    
+(println (split '(1 2 3 4 5 6 7 8)))  ; prints ((4 3 2 1) (5 6 7 8))
+(println (split '(1)))
+(println (split ()))
+
+(define (conslist A B)  ; cons all elements of A onto B in reverse order
+   (if (null? A) B (conslist (cdr A) (cons (car A) B))))
+
+(println (conslist '(a b c) '(f e d))) ; (c b a f e d)
+
+; merge two lists using cmp function to compare (<=, >=, etc)
+(define (merge cmp A B ax) ; ax should be initialized to ()
+   (cond ((null? A)              (conslist B ax))
+	 ((null? B)              (conslist A ax))
+	 ((cmp (car A) (car B))  (merge cmp (cdr A) B (cons (car A) ax)))
+	 (#t                     (merge cmp A (cdr B) (cons (car B) ax)))))
+
+(define (msort A cmp) ; mergesort A using ordering defined by cmp function
+  (if (or (null? A) (null? (cdr A))) A  ; base case
+      (let* ((AB (split A)) (left (car AB)) (right (cadr AB)))
+	(reverse (merge cmp (msort left cmp) (msort right cmp) ())))))
+
+(define lte (lambda (x y) (<= x y)))
+(define gte (lambda (x y) (>= x y)))
+(println (msort '(2 4) lte))
+(println (msort '(6 1) lte))
+(println (msort '(4 2 6 1 3) lte))
+(println (msort '(4 2 6 3 8 1 9 7 5 10) gte)) ; sorts in reverse order
+
+; ordering relation on date: month/day/year in format (year month day)
+
+(define (printdate d)
+   (begin (display (cadr d)) (display "/")
+	  (display (caddr d)) (display "/")
+	  (display (car d)) (display "\n")))
+(define (date m d y) (list y m d)) ; makes a date 
+
+(define somedates (cons (date 9 21 2017) (cons (date 2 3 2009) 
+   (cons (date 1 1 2018) (cons (date 12 31 2017) ())))))
+
+
+; note (equal? '(1 2) '(1 2)) returns true (#t)
+; but (eq? '(1 2) '(1 2)) returns false
+(define (dateorder a b)  ; date a comes before date b
+  (let ((y1 (car a)) (y2 (car b)) (m1 (cadr a)) (m2 (cadr b))
+	(d1 (caddr a)) (d2 (caddr b)))
+    (or (< y1 y2)
+	(and (= y1 y2) (< m1 m2))
+	(and (= y1 y2) (= m1 m2) (< d1 d2)))))
+
+(define sorteddates (msort somedates (lambda (x y) (or (dateorder x y) (equal? x y)))))
+
+; look ma, finally a loop!
+(define (foreach lst proc) 
+   (if (not (null? lst))
+       (begin
+	 (proc (car lst))
+	 (foreach (cdr lst) proc))))
+
+(foreach sorteddates (lambda (x) (printdate x)))

@@ -1,0 +1,103 @@
+#!/bin/perl
+
+# perl program that uses dynamic scoping:
+
+$x = 3;
+
+sub f { $x + 1; }
+
+local $x = 4;
+
+print f 1, "\n";   # prints 5, taking the $x in the dynamic scope.
+
+# To implement dynamic scoping, Perl uses an extra stack just for
+# the purpose.  The old value of a local var is pushed on the
+# special stack, and this stack is used when free vars that are
+# declared local are looked up.
+
+# if "my" is used instead of "local", then perl will use static scoping
+
+# how are my vars different from local vars?  A definition of a 
+# function that contains free vars must be more complicated - it 
+# constitutes a "closure": a pairing of a lambda term and the
+# static environment in which it was defined.  This idea of a closure
+# will turn out to be the key to object-orientation.  But for now,
+# you need to understand the difference between the static, 
+# and the runtime stack.  When we compile or interpret a program, 
+# a stack (or symbol table) is also needed to keep track of the 
+# scopes of variable declarations.  If, when looking up the binding
+# of free variables, it uses the static stack, then it's static
+# scoping.
+
+# The following fragments contrast directly static (my) and dynamic (local)
+# scoping:
+
+print "---------------\n";
+
+{  my $x = 2;
+   my $f = sub { $x };
+   {  my $x = 3;
+      print $f->(), "\n";  # prints 2, taking $x from static scope
+   }
+}
+
+
+{  local $x = 2;
+   local $f = sub { $x };
+   {  local $x = 3;     
+      print $f->(), "\n";  # prints 3, taking $x from dynamic scope
+   }
+}
+
+
+# Static scoping is the commonly accepted standard.  Consider the following
+# example:
+
+my $x = 2;
+
+sub f { $_[0] + $x }   # lambda y. y+x
+
+sub g
+{
+   my $x = $_[0];
+   f(1);   
+}
+
+# In the subroutine g, since $x is a "local" variable, IT SHOULD NOT MATTER
+# THAT IT'S CALLED x (alpha conversion).  That is, if that line in g read
+# instead "my $y = $_[0]", then surely g should remain the same function.
+# However, under dynamic scoping it would not.  The behavior, and thus
+# MEANING of f cannot be determined until runtime.  Thus when writing f
+# (and g), I cannot just choose any variable names I wish, but must
+# become concerned with how variables are named elsewhere in the program!
+# This contradicts the whole idea of "locality" and abstraction.  Dynamic
+# scoping is only useful in temporarily replacing the values of variables
+# that are GLOBAL ANYWAY.  In fact, as the standard Perl references will
+# tell you, the only time you should use local instead of my is to replace
+# the values of built-in global variables such as @ARGV (the command-line
+# arguments), or STDOUT, the standard output stream.
+
+
+######### Simulating dynamic scoping with static scoping.  
+
+# Dynamic scoping may be occasionally useful as explained, so is a language
+# missing something by not supporting it?  Not really.  We can simulate it
+# by saving the previous value of a variable on the runtime stack, and
+# recover it after we exit the "dynamic scope".
+
+# int x = 1;
+# int f(int y) { return x+y; }
+# int main()
+# {
+#   int savex = x; // simulates start of dynamic scope
+#   x = 2;         // x is "local" because the saved value will be recovered.
+#
+#   printf("%d\n", f(1));  // f will take x from "dynamic" scope
+#
+#   x = savex;    // simulates end of dynamic scope.
+# }
+
+## In this program we are using the runtime stack to simulate dynamic scoping.
+# int savex = x has the effect of pushing x onto the stack.  x = savex recovers
+# the original value.  Any value given to x in between is "local" because it
+# will be erased once the original value is recovered.

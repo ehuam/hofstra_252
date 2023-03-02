@@ -1,0 +1,121 @@
+#!/usr/bin/perl -w
+
+# This program uses the CGI.pm library (see stein.cshl.org/WWW/software/CGI/)
+# to create a web form for uploading files to a local directory.  The most
+# important function here is "print," which outputs html text.  The library
+# contains functions that make this easier, such as strong(...) which
+# produces emphasized text.  The interesting Perl code starts with line
+# marked with ******, which reads student username and ids from a file
+# and inserts them into a hash table.  The directory from which this is
+# loaded is not shown, for obvious security reasons.
+
+# This program is "stateless" in that each time the link is clicked, it
+# needs to run from the beginning, meaning that it has to reload the
+# hash table.  A better (though for this example overkill) approach is
+# to use a persistent background server (such as a sql database server),
+# which can provide this program with the information it needs on demand.
+
+
+use strict 'refs';
+use lib '..';
+use CGI qw(:standard);
+use CGI::Carp qw/fatalsToBrowser/;
+
+print header();
+print start_html("Uploading an Assignment");
+
+print "<center> ", h1("Upload Your Assignment"), "</center>",
+    strong('Enter you username, assignment (lab1, lab2, etc...) and filename carefully. There should not be any spaces.  Be sure to use the correct assignment designation given to you by the professor.'),
+    p,
+    'Select the ',cite('browse'),' button to choose a text file
+    to upload.  When you press the submit button it will be uploaded
+    for the professor to grade.  You may submit as many times as you wish
+    before the assignment due date, but use only one file name!';
+
+# Start a multipart form.
+print start_multipart_form(),
+    "<table> <tr> <td>",
+    "Enter your one-word username: ", p,
+    "Enter your Hofstra student id: ", p,
+    "Enter the assignment designation:  ", p,
+    "Enter the location of your file: ", p,
+    "</td> <td> ",
+    textfield('username'), p, 
+    textfield('sid'), p,
+    textfield('assignment'), p,
+    filefield('filename','',40),
+    br,
+    "</td></tr></table> ",
+    p,                                                                                                                                                            
+    reset,submit('submit','Submit'),
+    endform;
+
+    print hr(), p;
+
+# Process the form if there is a file name entered   ******
+if (my $file = param('filename')) 
+{
+    my $user = param('username');
+    my $lab = param('assignment');
+    my $id = param('sid');
+    if (!($user && $lab && $id)) 
+     { print h2("Fill in all the fields!"), p;
+     }
+
+# Read all student ids into a hash table     
+     open(infile,"</.../namesids");   # open input file, '<' means input
+     my %ht;  # hash table
+     my @entry;
+     my ($key,$val,$line);
+     while ($line = <infile>)
+     {
+       chomp $line; # get rid of \n at end
+       @entry = split / +|\t/, $line; # split line by finding white spaces,
+       ($key,$val) = @entry;          # creating a list of two values
+       $ht{uc($key)} = $val; # uc converts string to upper case
+     }
+    close infile;
+
+# Check student id
+    my $idmatch = ($id == $ht{uc($user)});
+
+    my $validfile;   # boolean to see if file is empty
+
+# When selecting the filename to upload, internet explorer will return the
+# full path for $file while netscape/mozilla will return just the file name.
+# To avoid using a full path name, we use split to dissect a path to retrieve
+# just the file name:
+
+    my $file2 = $file; 
+    my @path1 = split /\\|\//, $file2;  # dissect path, separated by / or \
+    $file2 = $path1[$#path1];  # $file2 is filename alone, without full path
+    # open output file on local disk '>' means output
+    $validfile = open(outfile,">/.../$lab/$user$file2");
+    if ($user && $lab && $idmatch && $validfile)
+    { 
+       my @contents = <$file>;
+       if (!(@contents))
+         { print h2("Error: Empty file; check file name"), p; }
+       else
+       {
+          print outfile @contents;
+          close outfile;
+          print h2("File $file2 Saved"), p;
+       }
+       close $file;
+
+    } # if valid
+    else
+    {
+	if (!$idmatch) {print h2("Error: Username - ID Mismatch"), p;}
+	else {if (!$validfile)
+	      {print h2("Error: check assignment designation"), p;}}
+    }
+}
+
+    end_html;
+
+print p, hr();
+print address( a({href=>'mailto:cscccl@hofstra.edu'},"Chuck C. Liang")), p;
+
+# This program is to be used for academic purposes only.

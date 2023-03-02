@@ -1,11 +1,11 @@
 # gitignore template for CSC-252 CSharp
 
 # ignore file created by g++
-#**/a.out
+**/a.out
 
 # Ignore folders that are created by dotnet
-#**/obj/
-#**/bin/
+**/obj/
+**/bin/
 
 # ignore files created by emacs
 [#]*[#]

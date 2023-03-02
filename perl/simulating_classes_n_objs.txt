@@ -1,0 +1,58 @@
+#!/bin/perl
+
+# Closure in Perl, simple example: a toggle between 1 and 0
+sub maketoggle
+{
+    my $x = 1; # initially sets toggle value to 1
+    sub { $x= 1-$x; $x } # switches x between 1 and 0
+} # maketoggle  (returns the inner sub as a closure)
+my $tg1 = maketoggle(0);
+my $tg2 = maketoggle(0);
+print $tg1->(2), "\n";   # 0
+print $tg1->(2), "\n";   # 1
+print $tg1->(2), "\n";   # 0
+print $tg1->(2), "\n";   # 1
+print $tg2->(2), "\n";   # 0  this shows that state info is maintained.
+
+
+#### Extending closures to full objects.
+# Bank accounts in perl (corresponds to scheme program in handout).
+# there's another way of doing oop in perl - involving packages and 
+# something called "bless".  I'm not using that - I'm using perl's 
+# more fundamental capabilities to build oop from scratch, like in scheme
+
+sub newaccount
+{
+   my $balance = $_[0];
+
+   my $inquiry = sub { $balance };
+   my $deposit = sub { $balance = $balance + $_[0]; };
+
+   my $chargefee = sub { $balance -= 3; }; # "private" method
+   my $withdraw = sub 
+		  { $balance = $balance - $_[0]; &$chargefee(); };
+  
+   # return interface function:
+   sub
+   {
+     my $method = $_[0]; # requested method
+     if ($method eq withdraw) { return $withdraw; }
+     if ($method eq deposit)  { return $deposit; }
+     if ($method eq inquiry)  { return &$inquiry(); }
+       else { die "error"; }
+   }
+}
+
+my $myaccount = newaccount(500);  # the & is actually optional here.
+my $youraccount = newaccount(800);
+
+my $balance = 50;
+
+$myaccount->(withdraw)->(30);  # ((myaccount 'withdraw) 30)
+
+&{&$youraccount(deposit)}(70);   # alternate syntax
+
+print "my balance is ", $myaccount->(inquiry), "\n";
+print "your balance is ", $youraccount->(inquiry), "\n";
+
+
